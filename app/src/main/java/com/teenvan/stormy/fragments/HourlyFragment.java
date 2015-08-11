@@ -27,6 +27,13 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.parse.FindCallback;
+import com.parse.GetCallback;
+import com.parse.Parse;
+import com.parse.ParseException;
+import com.parse.ParseObject;
+import com.parse.ParseQuery;
+import com.parse.SaveCallback;
 import com.squareup.okhttp.Call;
 import com.squareup.okhttp.Callback;
 import com.squareup.okhttp.OkHttpClient;
@@ -68,94 +75,30 @@ public class HourlyFragment extends Fragment {
         mForecastText = (TextView)rootView.findViewById(R.id.forecastText);
         mHoursList = (ListView)rootView.findViewById(R.id.hourlyList);
 
-
-        LocationManager locationManager = (LocationManager)getActivity().
-                getSystemService(Context.LOCATION_SERVICE);
-        Log.d("Location Values GPS", String.valueOf(locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)));
-        Log.d("Location Values Network", String.valueOf(locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)));
-
-        if(locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
-            locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER,0,0,new LocationListener() {
-                @Override
-                public void onLocationChanged(Location location) {
-                    latitude = location.getLatitude();
-                    longitude = location.getLongitude();
+        ParseQuery<ParseObject> locQuery = ParseQuery.getQuery("Location");
+        locQuery.fromLocalDatastore();
+        locQuery.getFirstInBackground(new GetCallback<ParseObject>() {
+            @Override
+            public void done(ParseObject parseObject, ParseException e) {
+                if( e== null){
+                    latitude = parseObject.getDouble("Latitude");
+                    longitude = parseObject.getDouble("Longitude");
+                    // Getting the JSON data
+                    forecastURL = forecastBaseURL + ApiKEY + "/" + Double.toString(latitude) + "," +
+                            Double.toString(longitude);
+                    Log.d(getString(R.string.forecast_api_url),forecastURL);
+                    setupHourlyNetworkConnection(forecastURL);
+                }else{
+                    Log.e("Location Object retrieval","failure",e);
                 }
-
-                @Override
-                public void onStatusChanged(String s, int i, Bundle bundle) {
-
-                }
-
-                @Override
-                public void onProviderEnabled(String s) {
-
-                }
-
-                @Override
-                public void onProviderDisabled(String s) {
-
-                }
-            });
-        }else if(locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)){
-            locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER,0,0,new LocationListener() {
-                @Override
-                public void onLocationChanged(Location location) {
-                    latitude = location.getLatitude();
-                    longitude = location.getLongitude();
-                }
-
-                @Override
-                public void onStatusChanged(String s, int i, Bundle bundle) {
-
-                }
-
-                @Override
-                public void onProviderEnabled(String s) {
-
-                }
-
-                @Override
-                public void onProviderDisabled(String s) {
-
-                }
-            });
-        }else if(!locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)&&
-                !locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)){
-            Toast.makeText(getActivity(),"Enable location services",Toast.LENGTH_LONG).show();
-            // notify user
-            AlertDialog.Builder dialog = new AlertDialog.Builder(getActivity());
-            dialog.setMessage("GPS not enabled");
-            dialog.setPositiveButton("Open Location Settings", new DialogInterface.OnClickListener() {
-                @Override
-                public void onClick(DialogInterface paramDialogInterface, int paramInt) {
-                    // TODO Auto-generated method stub
-                    Intent myIntent = new Intent( Settings.ACTION_LOCATION_SOURCE_SETTINGS);
-                    getActivity().startActivityForResult(myIntent,0);
-                    //get gps
-                }
-            });
-            dialog.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
-
-                @Override
-                public void onClick(DialogInterface paramDialogInterface, int paramInt) {
-                    // TODO Auto-generated method stub
+            }
+        });
 
 
-                }
-            });
-            dialog.show();
-        }
 
-        Location location = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
-        if(location != null){
-            latitude = location.getLatitude();
-            longitude = location.getLongitude();
-        }
-        // Getting the JSON data
-        forecastURL = forecastBaseURL + ApiKEY + "/" + Double.toString(latitude) + "," + Double.toString(longitude);
-        Log.d(getString(R.string.forecast_api_url),forecastURL);
-
+        return rootView;
+	}
+    public void setupHourlyNetworkConnection(String forecastURL){
         if(isNetworkAvailable()) {
 
             OkHttpClient client = new OkHttpClient();
@@ -173,10 +116,15 @@ public class HourlyFragment extends Fragment {
                     if (response.isSuccessful()) {
                         String jsonData = response.body().string();
                         try {
-                            ArrayList<CurrentWeather> mCurrentWeatherArray = getCurrentDetails(jsonData);
-                             temperatures = new ArrayList<String>();
-                             summaries = new ArrayList<String>();
-                             datetimes = new ArrayList<String>();
+                            ArrayList<CurrentWeather> mCurrentWeatherArray =
+                                    getHourlyCurrentDetails(jsonData);
+                            temperatures = new ArrayList<String>();
+                            summaries = new ArrayList<String>();
+                            datetimes = new ArrayList<String>();
+                            // Creating parse objects
+                            ParseObject tempObject = new ParseObject("Temperature");
+                            final ParseObject summObject = new ParseObject("Summaries");
+                            final ParseObject dateObject = new ParseObject("DateTime");
                             for(int i=0;i<mCurrentWeatherArray.size();i++){
                                 CurrentWeather mCW = mCurrentWeatherArray.get(i);
                                 String temp = Double.toString(mCW.getTemperature());
@@ -189,10 +137,13 @@ public class HourlyFragment extends Fragment {
                             getActivity().runOnUiThread(new Runnable() {
                                 @Override
                                 public void run() {
-                                    CustomListAdapter adapter = new CustomListAdapter(getActivity(),temperatures,datetimes,summaries);
+                                    CustomListAdapter adapter = new CustomListAdapter(getActivity(),
+                                            temperatures,datetimes,summaries);
                                     mHoursList.setAdapter(adapter);
                                 }
                             });
+
+
 
                         } catch (JSONException e) {
                             e.printStackTrace();
@@ -208,13 +159,9 @@ public class HourlyFragment extends Fragment {
         }else{
             Toast.makeText(getActivity(),getString(R.string.network_not_available),Toast.LENGTH_LONG).show();
         }
+    }
 
-
-
-        return rootView;
-	}
-
-    public ArrayList<CurrentWeather> getCurrentDetails(String jsonData) throws JSONException {
+    public ArrayList<CurrentWeather> getHourlyCurrentDetails(String jsonData) throws JSONException {
         // Create a JSONObject to handle the json data
 
         JSONObject forecast = new JSONObject(jsonData);
@@ -222,12 +169,6 @@ public class HourlyFragment extends Fragment {
         JSONObject hourlyForecast = forecast.getJSONObject("hourly");
         String iconString = hourlyForecast.getString("icon");
         final String summary = hourlyForecast.getString("summary");
-        getActivity().runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                mForecastText.setText(summary);
-            }
-        });
 
         JSONArray data = hourlyForecast.getJSONArray("data");
         ArrayList<CurrentWeather> mArray = new ArrayList<CurrentWeather>();
@@ -274,6 +215,8 @@ public class HourlyFragment extends Fragment {
         }
         return mArray;
     }
+
+
     private boolean isNetworkAvailable() {
         ConnectivityManager manager = (ConnectivityManager)getActivity().
                 getSystemService(Context.CONNECTIVITY_SERVICE);
@@ -284,5 +227,54 @@ public class HourlyFragment extends Fragment {
         }
         return isAvailable;
     }
+    private String getLocationName(Double latitude,Double longitude) throws IOException {
+        // Getting the city name
+        Geocoder geocoder = new Geocoder(getActivity(), Locale.getDefault());
+        List<Address> addresses = null;
+
+        addresses = geocoder.getFromLocation(latitude, longitude, 1);
+        String cityName = addresses.get(0).getAddressLine(0);
+        String stateName = addresses.get(0).getAddressLine(1);
+        String countryName = addresses.get(0).getAddressLine(2);
+        Log.d("Location Name",cityName);
+        return cityName;
+
+    }
+
+    private String getLocationFromQuery(String query) throws IOException {
+        Geocoder geocoder = new Geocoder(getActivity(),Locale.getDefault());
+        List<Address> addresses = null;
+        addresses = geocoder.getFromLocationName(query,1);
+        String cityName = addresses.get(0).getAddressLine(0);
+
+        return cityName;
+    }
+
+    private Double getLat(String query) throws IOException {
+        Geocoder geocoder = new Geocoder(getActivity(),Locale.getDefault());
+        List<Address> addresses = null;
+        addresses = geocoder.getFromLocationName(query,1);
+        String cityName = addresses.get(0).getAddressLine(0);
+        Double lat = addresses.get(0).getLatitude();
+        return lat;
+    }
+    private Double getLong(String query) throws IOException {
+        Geocoder geocoder = new Geocoder(getActivity(),Locale.getDefault());
+        List<Address> addresses = null;
+        addresses = geocoder.getFromLocationName(query,1);
+        String cityName = addresses.get(0).getAddressLine(0);
+        Double longi = addresses.get(0).getLongitude();
+        return longi;
+    }
+
+    // Capturing data from current fragment
+//    public void getLat(Double lat,Double longi ){
+//        latitude = lat;
+//        longitude = longi;
+//        forecastURL = forecastBaseURL + ApiKEY + "/" + Double.toString(latitude) + "," + Double.toString(longitude);
+//        Log.d(getString(R.string.forecast_api_url),forecastURL);
+//        setupNetworkConnection(forecastURL);
+//    }
+
 
 }

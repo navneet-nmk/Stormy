@@ -1,5 +1,6 @@
 package com.teenvan.stormy.fragments;
 
+import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -27,6 +28,11 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.parse.GetCallback;
+import com.parse.ParseException;
+import com.parse.ParseObject;
+import com.parse.ParseQuery;
+import com.parse.SaveCallback;
 import com.squareup.okhttp.Call;
 import com.squareup.okhttp.Callback;
 import com.squareup.okhttp.OkHttpClient;
@@ -35,12 +41,15 @@ import com.squareup.okhttp.Response;
 import com.teenvan.stormy.CurrentWeather;
 import com.teenvan.stormy.MainActivity;
 import com.teenvan.stormy.R;
+import com.teenvan.stormy.com.teenvan.stormy.adapters.CustomListAdapter;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.w3c.dom.Text;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
@@ -52,7 +61,7 @@ import se.walkercrou.places.Place;
 
 public class CurrentFragment extends Fragment {
 	// Declaration of member variables
-	private TextView mLocation , mDateTime ,
+	public TextView mLocation , mDateTime ,
             mTemperature , mApparentTemperature , mSummary ,
             mDewPoint ,mHumidity , mPressure;
     private ImageView mWeatherImage , mDewPointImage , mHumidityImage , mPressureImage,mSearchImage;
@@ -63,11 +72,14 @@ public class CurrentFragment extends Fragment {
     private double longitude = -122.423;
     private String forecastURL ;
     private CurrentWeather mCurrentWeather;
-    private String googleApiKey = "AIzaSyA4FeAiG_BiDXP-ooY7ec3Ha-jtqQoT9vE";
+    private String googleApiKey = "AIzaSyDAm2MBA09M2bLATgj2rvLP8bj68-y7cwc";
     private GooglePlaces client = new GooglePlaces(googleApiKey);
     private EditText mLocationET;
+    SendLatLong mSendLatLong;
+    private ArrayList<String> temperatures,summaries,datetimes;
 
-	@SuppressWarnings("deprecation")
+
+    @SuppressWarnings("deprecation")
 	public View onCreateView(LayoutInflater inflater, ViewGroup container,
 			Bundle savedInstanceState) {
 		View rootView = inflater.inflate(R.layout.fragment_time, container,
@@ -168,6 +180,32 @@ public class CurrentFragment extends Fragment {
             latitude = location.getLatitude();
             longitude = location.getLongitude();
         }
+        Location gpsLocation = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+        if(location != null){
+            latitude = location.getLatitude();
+            longitude = location.getLongitude();
+        }
+
+        // Save the location coordinates in a ParseObject on the local data store
+        ParseObject locationObject = new ParseObject("Location");
+        locationObject.put("Latitude",latitude);
+        locationObject.put("Longitude",longitude);
+        locationObject.pinInBackground(new SaveCallback() {
+            @Override
+            public void done(ParseException e) {
+                if (e == null) {
+                    Log.d("Location Object Saving", "Success");
+                } else {
+                    Log.e("Parse Error", "Location Object saving", e);
+                }
+            }
+        });
+
+        // Getting the JSON data
+        forecastURL = forecastBaseURL + ApiKEY + "/" + Double.toString(latitude) + "," +
+                Double.toString(longitude);
+        Log.d(getString(R.string.forecast_api_url),forecastURL);
+
 
         try {
             mLocation.setText(getLocationName(latitude,longitude));
@@ -186,8 +224,34 @@ public class CurrentFragment extends Fragment {
                     public void onClick(View view) {
                         final String query = mLocationET.getText().toString();
                         if(!query.isEmpty()){
-                        //GetResults res = new GetResults();
-                        //res.execute(query);
+                            try {
+                                if(isNetworkAvailable()) {
+                                    final String cityName = getLocationFromQuery(query);
+                                    latitude = getLat(cityName);
+                                    longitude = getLong(cityName);
+                                    mSendLatLong.sendLatLong(latitude, longitude);
+                                    Log.d("Locations", latitude + " " + longitude);
+                                    forecastURL = forecastBaseURL + ApiKEY + "/" +
+                                            Double.toString(latitude) + "," +
+                                            Double.toString(longitude);
+                                    Log.d(getString(R.string.forecast_api_url), forecastURL);
+                                    mLocationET.setVisibility(View.INVISIBLE);
+                                    mSearchImage.setVisibility(View.INVISIBLE);
+                                    mLocation.setVisibility(View.VISIBLE);
+                                    mLocation.setText(cityName);
+                                    setupNetworkConnection(forecastURL);
+
+
+
+                               
+                                }else{
+                                    Toast.makeText(getActivity(),
+                                            "Please check your internet connection",
+                                            Toast.LENGTH_SHORT).show();
+                                }
+                            } catch (IOException e) {
+                                Log.e("Location Exception","Error",e);
+                            }
 
                         }else{
                             Toast.makeText(getActivity(),"Please enter a valid location",
@@ -199,11 +263,16 @@ public class CurrentFragment extends Fragment {
             }
         });
 
-        // Getting the JSON data
-        forecastURL = forecastBaseURL + ApiKEY + "/" + Double.toString(latitude) + "," +
-                Double.toString(longitude);
-        Log.d(getString(R.string.forecast_api_url),forecastURL);
 
+        // Setting everything up
+        setupNetworkConnection(forecastURL);
+
+
+		return rootView;
+
+	}
+
+    public void setupNetworkConnection(String forecastURL){
         if(isNetworkAvailable()) {
 
             OkHttpClient client = new OkHttpClient();
@@ -249,6 +318,8 @@ public class CurrentFragment extends Fragment {
                                 }
                             });
 
+                          getParseObject();
+
                         } catch (JSONException e) {
                             Log.e("JSON Error","Error",e);
                         }
@@ -263,11 +334,37 @@ public class CurrentFragment extends Fragment {
         }else{
             Toast.makeText(getActivity(),getString(R.string.network_not_available),Toast.LENGTH_LONG).show();
         }
+    }
 
-
-		return rootView;
-
-	}
+    private void getParseObject() {
+       ParseQuery<ParseObject> query = ParseQuery.getQuery("Location");
+        query.fromLocalDatastore();
+        query.getFirstInBackground(new GetCallback<ParseObject>() {
+            @Override
+            public void done(ParseObject parseObject, ParseException e) {
+                if( e==null){
+                    Log.d("Getting Parse Object","Success");
+                    Log.d("Location Coordinates Local",
+                            parseObject.getDouble("Latitude")+" "+
+                                    parseObject.getDouble("Longitude")+"");
+                    parseObject.put("Latitude",latitude);
+                    parseObject.put("Longitude",longitude);
+                    parseObject.pinInBackground(new SaveCallback() {
+                        @Override
+                        public void done(ParseException e) {
+                            if(e == null){
+                                Log.d("Location Object Update","Success");
+                            }else{
+                                Log.e("Location Object Update","Failure",e);
+                            }
+                        }
+                    });
+                }else{
+                    Log.d("Getting Parse Object",e.getMessage());
+                }
+            }
+        });
+    }
 
 
     public CurrentWeather getCurrentDetails(String jsonData) throws JSONException {
@@ -320,6 +417,9 @@ public class CurrentFragment extends Fragment {
 
         return mCurrentWeather;
     }
+
+
+
     private boolean isNetworkAvailable() {
         ConnectivityManager manager = (ConnectivityManager)getActivity().getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkInfo networkInfo = manager.getActiveNetworkInfo();
@@ -330,95 +430,9 @@ public class CurrentFragment extends Fragment {
         return isAvailable;
     }
 
-    @Override
-    public void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-        if(resultCode == 1){
-            LocationManager locationManager = (LocationManager)getActivity().
-                    getSystemService(Context.LOCATION_SERVICE);
-            if(locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
-                locationManager.
-                        requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, new LocationListener() {
-                            @Override
-                            public void onLocationChanged(Location location) {
-                                latitude = location.getLatitude();
-                                longitude = location.getLongitude();
-                                Log.d("Location Coordinates", Double.toString(latitude) + " " +
-                                        Double.toString(longitude));
-                            }
-
-                            @Override
-                            public void onStatusChanged(String s, int i, Bundle bundle) {
-
-                            }
-
-                            @Override
-                            public void onProviderEnabled(String s) {
-
-                            }
-
-                            @Override
-                            public void onProviderDisabled(String s) {
-
-                            }
-                        });
-            }else if(locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)){
-                locationManager.
-                        requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 0, 0, new LocationListener() {
-                            @Override
-                            public void onLocationChanged(Location location) {
-                                latitude = location.getLatitude();
-                                longitude = location.getLongitude();
-                                Log.d("Location Coordinates", Double.toString(latitude) + " " +
-                                        Double.toString(longitude));
-                            }
-
-                            @Override
-                            public void onStatusChanged(String s, int i, Bundle bundle) {
-
-                            }
-
-                            @Override
-                            public void onProviderEnabled(String s) {
-
-                            }
-
-                            @Override
-                            public void onProviderDisabled(String s) {
-
-                            }
-                        });
-            }else if(!locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)&&
-                    !locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)){
-                Toast.makeText(getActivity(),"Enable location services",Toast.LENGTH_LONG).show();
-                // notify user
-                AlertDialog.Builder dialog = new AlertDialog.Builder(getActivity());
-                dialog.setMessage("GPS not enabled");
-                dialog.setPositiveButton("Open Location Settings", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface paramDialogInterface, int paramInt) {
-                        // TODO Auto-generated method stub
-                        Intent myIntent = new Intent( Settings.ACTION_LOCATION_SOURCE_SETTINGS);
-                        getActivity().startActivityForResult(myIntent,0);
-                        //get gps
-                    }
-                });
-                dialog.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
-
-                    @Override
-                    public void onClick(DialogInterface paramDialogInterface, int paramInt) {
-                        // TODO Auto-generated method stub
-
-
-                    }
-                });
-                dialog.show();
-            }
-        }
-    }
-
     private String getLocationName(Double latitude,Double longitude) throws IOException {
         // Getting the city name
+
         Geocoder geocoder = new Geocoder(getActivity(), Locale.getDefault());
         List<Address> addresses = null;
 
@@ -430,21 +444,46 @@ public class CurrentFragment extends Fragment {
         return cityName;
 
     }
-    private class GetResults extends AsyncTask<String,String,String>{
 
-        @Override
-        protected String doInBackground(String... strings) {
-            List<Place> places = client.
-                    getPlacesByQuery(strings[0], GooglePlaces.MAXIMUM_RESULTS);
-            return places.get(0).getName();
+    private String getLocationFromQuery(String query) throws IOException {
+        Geocoder geocoder = new Geocoder(getActivity(),Locale.getDefault());
+        List<Address> addresses = null;
+        addresses = geocoder.getFromLocationName(query,1);
+        String cityName = addresses.get(0).getAddressLine(0);
+
+        return cityName;
+    }
+
+    private Double getLat(String query) throws IOException {
+        Geocoder geocoder = new Geocoder(getActivity(),Locale.getDefault());
+        List<Address> addresses = null;
+        addresses = geocoder.getFromLocationName(query,1);
+        String cityName = addresses.get(0).getAddressLine(0);
+        Double lat = addresses.get(0).getLatitude();
+        return lat;
+    }
+    private Double getLong(String query) throws IOException {
+        Geocoder geocoder = new Geocoder(getActivity(),Locale.getDefault());
+        List<Address> addresses = null;
+        addresses = geocoder.getFromLocationName(query,1);
+        String cityName = addresses.get(0).getAddressLine(0);
+        Double longi = addresses.get(0).getLongitude();
+        return longi;
+    }
+
+    public interface SendLatLong{
+        public void sendLatLong(Double lat,Double longitude);
+    }
+
+    @Override
+    public void onAttach(Activity activity) {
+        super.onAttach(activity);
+        try{
+            mSendLatLong = (SendLatLong)activity;
+        }catch (ClassCastException e){
+            Log.e("Class Cast","You need to implement interface in Activity",e);
         }
+
     }
 
-    protected void onPostExecute(String result) {
-        // execution of result of Long time consuming operation
-        mLocationET.setVisibility(View.INVISIBLE);
-        mSearchImage.setVisibility(View.INVISIBLE);
-        mLocation.setVisibility(View.VISIBLE);
-        mLocation.setText(result);
-    }
 }

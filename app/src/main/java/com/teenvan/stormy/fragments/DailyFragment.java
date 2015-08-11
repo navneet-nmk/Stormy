@@ -9,6 +9,7 @@ import com.teenvan.stormy.CurrentWeather;
 import com.teenvan.stormy.R;
 import com.teenvan.stormy.com.teenvan.stormy.adapters.CustomListAdapter;
 
+import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -48,6 +49,7 @@ public class DailyFragment extends Fragment {
     private double longitude = -122.423;
     private String forecastURL;
     private ArrayList<String> temperatures,summaries,datetimes;
+
 
 	@Override
 	public View onCreateView(LayoutInflater inflater, ViewGroup container,

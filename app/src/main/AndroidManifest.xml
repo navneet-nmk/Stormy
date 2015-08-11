@@ -8,10 +8,14 @@
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
 
     <application
+        android:name=".StormyApplicationClass"
         android:allowBackup="true"
         android:icon="@drawable/ic_launcher"
         android:label="@string/app_name"
         android:theme="@style/AppTheme" >
+        <meta-data
+            android:name="com.google.android.geo.API_KEY"
+            android:value="AIzaSyDAm2MBA09M2bLATgj2rvLP8bj68-y7cwc"/>
         <activity
             android:name=".MainActivity"
             android:label="@string/app_name" >
