@@ -1,5 +1,10 @@
 package com.teenvan.stormy.fragments;
 
+import com.parse.GetCallback;
+import com.parse.Parse;
+import com.parse.ParseException;
+import com.parse.ParseObject;
+import com.parse.ParseQuery;
 import com.squareup.okhttp.Call;
 import com.squareup.okhttp.Callback;
 import com.squareup.okhttp.OkHttpClient;
@@ -61,93 +66,36 @@ public class DailyFragment extends Fragment {
         mDailyForecastText = (TextView)rootView.findViewById(R.id.dailyforecastText);
         mDailyList = (ListView)rootView.findViewById(R.id.dailyList);
 
-        LocationManager locationManager = (LocationManager)getActivity().
-                getSystemService(Context.LOCATION_SERVICE);
-        Log.d("Location Values GPS", String.valueOf(locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)));
-        Log.d("Location Values Network", String.valueOf(locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)));
-
-        if(locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
-            locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER,0,0,new LocationListener() {
-                @Override
-                public void onLocationChanged(Location location) {
-                    latitude = location.getLatitude();
-                    longitude = location.getLongitude();
-                }
-
-                @Override
-                public void onStatusChanged(String s, int i, Bundle bundle) {
-
-                }
-
-                @Override
-                public void onProviderEnabled(String s) {
+        // Get the parse object
+        ParseQuery<ParseObject> locQuery = ParseQuery.getQuery("Location");
+        locQuery.fromLocalDatastore();
+        locQuery.getFirstInBackground(new GetCallback<ParseObject>() {
+            @Override
+            public void done(ParseObject parseObject, ParseException e) {
+                if( e == null){
+                    latitude = parseObject.getDouble("Latitude");
+                    longitude = parseObject.getDouble("Longitude");
+                    // Getting the JSON data
+                    forecastURL = forecastBaseURL + ApiKEY + "/" +
+                            Double.toString(latitude) + "," + Double.toString(longitude);
+                    Log.d(getString(R.string.forecast_api_url),forecastURL);
+                    setupDailyNetworkConnection(forecastURL);
+                }else{
 
                 }
-
-                @Override
-                public void onProviderDisabled(String s) {
-
-                }
-            });
-        }else if(locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)){
-            locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER,0,0,new LocationListener() {
-                @Override
-                public void onLocationChanged(Location location) {
-                    latitude = location.getLatitude();
-                    longitude = location.getLongitude();
-                }
-
-                @Override
-                public void onStatusChanged(String s, int i, Bundle bundle) {
-
-                }
-
-                @Override
-                public void onProviderEnabled(String s) {
-
-                }
-
-                @Override
-                public void onProviderDisabled(String s) {
-
-                }
-            });
-        }else if(!locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)&&
-                !locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)){
-            Toast.makeText(getActivity(),"Enable location services",Toast.LENGTH_LONG).show();
-            // notify user
-            AlertDialog.Builder dialog = new AlertDialog.Builder(getActivity());
-            dialog.setMessage("GPS not enabled");
-            dialog.setPositiveButton("Open Location Settings", new DialogInterface.OnClickListener() {
-                @Override
-                public void onClick(DialogInterface paramDialogInterface, int paramInt) {
-                    // TODO Auto-generated method stub
-                    Intent myIntent = new Intent( Settings.ACTION_LOCATION_SOURCE_SETTINGS);
-                    getActivity().startActivityForResult(myIntent,0);
-                    //get gps
-                }
-            });
-            dialog.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
-
-                @Override
-                public void onClick(DialogInterface paramDialogInterface, int paramInt) {
-                    // TODO Auto-generated method stub
+            }
+        });
 
 
-                }
-            });
-            dialog.show();
-        }
 
-        Location location = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
-        if(location != null){
-            latitude = location.getLatitude();
-            longitude = location.getLongitude();
-        }
-        // Getting the JSON data
-        forecastURL = forecastBaseURL + ApiKEY + "/" + Double.toString(latitude) + "," + Double.toString(longitude);
-        Log.d(getString(R.string.forecast_api_url),forecastURL);
 
+
+
+
+        return rootView;
+	}
+
+    public void setupDailyNetworkConnection(String forecastURL){
         if(isNetworkAvailable()) {
 
             OkHttpClient client = new OkHttpClient();
@@ -202,10 +150,7 @@ public class DailyFragment extends Fragment {
             Toast.makeText(getActivity(),getString(R.string.network_not_available),Toast.LENGTH_LONG).show();
         }
 
-
-
-        return rootView;
-	}
+    }
 
     public ArrayList<CurrentWeather> getCurrentDetails(String jsonData) throws JSONException {
         // Create a JSONObject to handle the json data
@@ -274,6 +219,14 @@ public class DailyFragment extends Fragment {
             isAvailable = true;
         }
         return isAvailable;
+    }
+
+
+    public void updateListView(Double lat,Double longi) {
+        forecastURL = forecastBaseURL + ApiKEY + "/" + Double.toString(lat) + "," +
+                Double.toString(longi);
+        Log.d(getString(R.string.forecast_api_url), forecastURL);
+        setupDailyNetworkConnection(forecastURL);
     }
 
 }

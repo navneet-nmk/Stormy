@@ -97,6 +97,25 @@ public class CurrentFragment extends Fragment {
         mLocationET = (EditText)rootView.findViewById(R.id.locationEditText);
         mSearchImage = (ImageView)rootView.findViewById(R.id.searchImage);
 
+        ParseQuery<ParseObject> cwQuery = ParseQuery.getQuery("CurrentWeather");
+        cwQuery.fromLocalDatastore();
+        cwQuery.getFirstInBackground(new GetCallback<ParseObject>() {
+            @Override
+            public void done(ParseObject parseObject, ParseException e) {
+                if( e== null){
+                    mTemperature.setText(parseObject.getInt("Temperature")+"º");
+                    mApparentTemperature.setText("Feels like "+
+                            parseObject.getInt("AppTemperature")+"º");
+                    mSummary.setText(parseObject.getString("Summary"));
+                    mDewPoint.setText("Dew Point: "+parseObject.getDouble("DewPoint"));
+                    mHumidity.setText("Humidity: "+parseObject.getDouble("Humidity")+"%");
+                    mPressure.setText("Pressure: "+parseObject.getDouble("Pressure"));
+                }else{
+                    Log.e("Current Weather Object Retrieval","Failure",e);
+                }
+            }
+        });
+
         LocationManager locationManager = (LocationManager)getActivity().
                 getSystemService(Context.LOCATION_SERVICE);
         Log.d("Location Values GPS", String.valueOf(locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)));
@@ -187,19 +206,46 @@ public class CurrentFragment extends Fragment {
         }
 
         // Save the location coordinates in a ParseObject on the local data store
-        ParseObject locationObject = new ParseObject("Location");
-        locationObject.put("Latitude",latitude);
-        locationObject.put("Longitude",longitude);
-        locationObject.pinInBackground(new SaveCallback() {
+        ParseQuery<ParseObject> locQuery = ParseQuery.getQuery("Location");
+        locQuery.fromLocalDatastore();
+        locQuery.getFirstInBackground(new GetCallback<ParseObject>() {
             @Override
-            public void done(ParseException e) {
-                if (e == null) {
-                    Log.d("Location Object Saving", "Success");
-                } else {
-                    Log.e("Parse Error", "Location Object saving", e);
+            public void done(ParseObject parseObject, ParseException e) {
+                if( e == null){
+                    if(parseObject == null){
+                        ParseObject locationObject = new ParseObject("Location");
+                        locationObject.put("Latitude",latitude);
+                        locationObject.put("Longitude",longitude);
+                        locationObject.pinInBackground(new SaveCallback() {
+                            @Override
+                            public void done(ParseException e) {
+                                if (e == null) {
+                                    Log.d("Location Object Saving", "Success");
+                                } else {
+                                    Log.e("Parse Error", "Location Object saving", e);
+                                }
+                            }
+                        });
+                    }else{
+                        parseObject.put("Latitude",latitude);
+                        parseObject.put("Longitude",longitude);
+                        parseObject.pinInBackground(new SaveCallback() {
+                            @Override
+                            public void done(ParseException e) {
+                                if(e == null){
+                                    Log.d("Location Object Updation","Success");
+                                }else{
+                                    Log.e("Location Object Updation","Failure",e);
+                                }
+                            }
+                        });
+                    }
+                }else{
+                    Log.e("Location Object Retrieval","Failure",e);
                 }
             }
         });
+
 
         // Getting the JSON data
         forecastURL = forecastBaseURL + ApiKEY + "/" + Double.toString(latitude) + "," +
@@ -240,11 +286,7 @@ public class CurrentFragment extends Fragment {
                                     mLocation.setVisibility(View.VISIBLE);
                                     mLocation.setText(cityName);
                                     setupNetworkConnection(forecastURL);
-
-
-
-                               
-                                }else{
+                               }else{
                                     Toast.makeText(getActivity(),
                                             "Please check your internet connection",
                                             Toast.LENGTH_SHORT).show();
@@ -291,11 +333,11 @@ public class CurrentFragment extends Fragment {
                         String jsonData = response.body().string();
                         try {
                             mCurrentWeather = getCurrentDetails(jsonData);
-                            Double humidity = mCurrentWeather.getHumidity()*100;
+                            final Double humidity = mCurrentWeather.getHumidity()*100;
                             final int humidityLevel = humidity.intValue();
                             final Double dewPoint = mCurrentWeather.getDewPoint();
                             final Double pressure = mCurrentWeather.getPressure();
-                            Double appTemp = mCurrentWeather.getApparentTemperature();
+                            final Double appTemp = mCurrentWeather.getApparentTemperature();
                             final String summary = mCurrentWeather.getSummary();
                             final String datetime = mCurrentWeather.getFormattedTime();
                             Double temp = mCurrentWeather.getTemperature();
@@ -305,6 +347,46 @@ public class CurrentFragment extends Fragment {
                             Double tempD = ((temp - 32)*5)/9;
                             final int tempC = tempD.intValue();
                             final int appTempC = tempE.intValue();
+
+                            // Save the current weather data in parse local data store
+                            ParseQuery<ParseObject> cQuery = ParseQuery.getQuery("CurrentWeather");
+                            cQuery.fromLocalDatastore();
+                            cQuery.getFirstInBackground(new GetCallback<ParseObject>() {
+                                @Override
+                                public void done(ParseObject parseObject, ParseException e) {
+                                    if( e == null){
+                                        if(parseObject == null){
+                                           ParseObject object = new ParseObject("CurrentWeather");
+                                            object.put("Temperature",tempC);
+                                            object.put("AppTemperature",appTempC);
+                                            object.put("Summary",summary);
+                                            object.put("DewPoint",dewPoint);
+                                            object.put("Pressure",pressure);
+                                            object.put("Humidity",humidity);
+                                            object.pinInBackground(new SaveCallback() {
+                                                @Override
+                                                public void done(ParseException e) {
+                                                    if(e == null){
+                                                        Log.d("Parse Object Pinning","Success");
+                                                    }else{
+                                                        Log.e("Parse Object Pinning","Failure",e);
+                                                    }
+                                                }
+                                            });
+                                        }else{
+                                            parseObject.put("Temperature",tempC);
+                                            parseObject.put("AppTemperature",appTempC);
+                                            parseObject.put("Summary",summary);
+                                            parseObject.put("DewPoint",dewPoint);
+                                            parseObject.put("Pressure",pressure);
+                                            parseObject.put("Humidity",humidity);
+                                        }
+                                    }else{
+                                        Log.e("Current Weather Object Retrieval","Failure",e);
+                                    }
+                                }
+                            });
+
                             getActivity().runOnUiThread(new Runnable() {
                                 @Override
                                 public void run() {

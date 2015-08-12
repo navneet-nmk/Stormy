@@ -175,7 +175,13 @@ public class HourlyFragment extends Fragment {
         for( int i=0;i<12;i++){
             JSONObject currentForecast = data.getJSONObject(i);
             long time = currentForecast.getLong("time");
-            String summaryHr = currentForecast.getString("summary");
+            final String summaryHr = currentForecast.getString("summary");
+            getActivity().runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    mForecastText.setText(summaryHr);
+                }
+            });
 
             // int nearestSD = currentForecast.getInt("nearestStormDistance");
             // int nearestSB = currentForecast.getInt("nearestStormBearing");
@@ -267,14 +273,11 @@ public class HourlyFragment extends Fragment {
         return longi;
     }
 
-    // Capturing data from current fragment
-//    public void getLat(Double lat,Double longi ){
-//        latitude = lat;
-//        longitude = longi;
-//        forecastURL = forecastBaseURL + ApiKEY + "/" + Double.toString(latitude) + "," + Double.toString(longitude);
-//        Log.d(getString(R.string.forecast_api_url),forecastURL);
-//        setupNetworkConnection(forecastURL);
-//    }
-
+    public void updateListView(Double lat,Double longi){
+        forecastURL = forecastBaseURL + ApiKEY + "/" + Double.toString(lat) + "," +
+                Double.toString(longi);
+        Log.d(getString(R.string.forecast_api_url),forecastURL);
+        setupHourlyNetworkConnection(forecastURL);
+    }
 
 }

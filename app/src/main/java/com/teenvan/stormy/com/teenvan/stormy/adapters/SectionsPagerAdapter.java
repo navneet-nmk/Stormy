@@ -1,11 +1,15 @@
-package com.teenvan.stormy;
+package com.teenvan.stormy.com.teenvan.stormy.adapters;
 
 import java.util.Locale;
 
 import android.content.Context;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentPagerAdapter;
+import android.util.SparseArray;
+import android.view.ViewGroup;
 
+import com.teenvan.stormy.MainActivity;
+import com.teenvan.stormy.R;
 import com.teenvan.stormy.fragments.DailyFragment;
 import com.teenvan.stormy.fragments.HourlyFragment;
 import com.teenvan.stormy.fragments.CurrentFragment;
@@ -18,6 +22,7 @@ import com.teenvan.stormy.fragments.CurrentFragment;
 public class SectionsPagerAdapter extends FragmentPagerAdapter {
 
 	protected Context mContext;
+    SparseArray<Fragment> registeredFragments = new SparseArray<Fragment>();
 
 	public SectionsPagerAdapter(MainActivity context,
 			android.support.v4.app.FragmentManager fragmentmanager) {
@@ -65,6 +70,23 @@ public class SectionsPagerAdapter extends FragmentPagerAdapter {
 		}
 		return null;
 	}
+
+    @Override
+    public Object instantiateItem(ViewGroup container, int position) {
+        Fragment fragment = (Fragment) super.instantiateItem(container, position);
+        registeredFragments.put(position, fragment);
+        return fragment;
+    }
+
+    @Override
+    public void destroyItem(ViewGroup container, int position, Object object) {
+        registeredFragments.remove(position);
+        super.destroyItem(container, position, object);
+    }
+
+    public Fragment getRegisteredFragment(int position) {
+        return registeredFragments.get(position);
+    }
 
 
 
