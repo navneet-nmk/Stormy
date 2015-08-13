@@ -81,7 +81,7 @@ public class DailyFragment extends Fragment {
                     Log.d(getString(R.string.forecast_api_url),forecastURL);
                     setupDailyNetworkConnection(forecastURL);
                 }else{
-
+                    Log.e("DailyFragment Location Object Retrieval","Failure",e);
                 }
             }
         });

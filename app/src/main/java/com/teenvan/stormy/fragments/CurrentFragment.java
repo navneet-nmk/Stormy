@@ -118,8 +118,10 @@ public class CurrentFragment extends Fragment {
 
         LocationManager locationManager = (LocationManager)getActivity().
                 getSystemService(Context.LOCATION_SERVICE);
-        Log.d("Location Values GPS", String.valueOf(locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)));
-        Log.d("Location Values Network", String.valueOf(locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)));
+        Log.d("Location Values GPS", String.valueOf(locationManager.
+                isProviderEnabled(LocationManager.GPS_PROVIDER)));
+        Log.d("Location Values Network", String.valueOf(locationManager.
+                isProviderEnabled(LocationManager.NETWORK_PROVIDER)));
 
         if(locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
             locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER,0,0,new LocationListener() {
@@ -212,36 +214,34 @@ public class CurrentFragment extends Fragment {
             @Override
             public void done(ParseObject parseObject, ParseException e) {
                 if( e == null){
-                    if(parseObject == null){
-                        ParseObject locationObject = new ParseObject("Location");
-                        locationObject.put("Latitude",latitude);
-                        locationObject.put("Longitude",longitude);
-                        locationObject.pinInBackground(new SaveCallback() {
-                            @Override
-                            public void done(ParseException e) {
-                                if (e == null) {
-                                    Log.d("Location Object Saving", "Success");
-                                } else {
-                                    Log.e("Parse Error", "Location Object saving", e);
-                                }
+                    parseObject.put("Latitude",latitude);
+                    parseObject.put("Longitude",longitude);
+                    parseObject.pinInBackground(new SaveCallback() {
+                        @Override
+                        public void done(ParseException e) {
+                            if( e== null){
+                                Log.d("Location Object Updation","Success");
+                            }else{
+                                Log.e("Location Object Updation","Failure",e);
                             }
-                        });
-                    }else{
-                        parseObject.put("Latitude",latitude);
-                        parseObject.put("Longitude",longitude);
-                        parseObject.pinInBackground(new SaveCallback() {
-                            @Override
-                            public void done(ParseException e) {
-                                if(e == null){
-                                    Log.d("Location Object Updation","Success");
-                                }else{
-                                    Log.e("Location Object Updation","Failure",e);
-                                }
-                            }
-                        });
-                    }
+                        }
+                    });
                 }else{
                     Log.e("Location Object Retrieval","Failure",e);
+                    // Create a ParseObject of class Location
+                    ParseObject locObject = new ParseObject("Location");
+                    locObject.put("Latitude",latitude);
+                    locObject.put("Longitude",longitude);
+                    locObject.pinInBackground(new SaveCallback() {
+                        @Override
+                        public void done(ParseException e) {
+                            if( e== null){
+                                Log.d("Location Object Creation","Success");
+                            }else{
+                                Log.e("Location Object Creation","Failure",e);
+                            }
+                        }
+                    });
                 }
             }
         });
@@ -354,35 +354,46 @@ public class CurrentFragment extends Fragment {
                             cQuery.getFirstInBackground(new GetCallback<ParseObject>() {
                                 @Override
                                 public void done(ParseObject parseObject, ParseException e) {
-                                    if( e == null){
-                                        if(parseObject == null){
-                                           ParseObject object = new ParseObject("CurrentWeather");
-                                            object.put("Temperature",tempC);
-                                            object.put("AppTemperature",appTempC);
-                                            object.put("Summary",summary);
-                                            object.put("DewPoint",dewPoint);
-                                            object.put("Pressure",pressure);
-                                            object.put("Humidity",humidity);
-                                            object.pinInBackground(new SaveCallback() {
-                                                @Override
-                                                public void done(ParseException e) {
-                                                    if(e == null){
-                                                        Log.d("Parse Object Pinning","Success");
-                                                    }else{
-                                                        Log.e("Parse Object Pinning","Failure",e);
-                                                    }
-                                                }
-                                            });
-                                        }else{
+                                    if( e == null){                                   
                                             parseObject.put("Temperature",tempC);
                                             parseObject.put("AppTemperature",appTempC);
                                             parseObject.put("Summary",summary);
                                             parseObject.put("DewPoint",dewPoint);
                                             parseObject.put("Pressure",pressure);
                                             parseObject.put("Humidity",humidity);
-                                        }
+                                            // Pin in background
+                                            parseObject.pinInBackground(new SaveCallback() {
+                                                @Override
+                                                public void done(ParseException e) {
+                                                    if( e == null){
+                                                        Log.d("Current Weather Object Updation","Success");
+                                                    }else{
+                                                        Log.e("Current Weather Object Updation","Failure",e);
+                                                    }
+                                                }
+                                            });
+                                        
                                     }else{
                                         Log.e("Current Weather Object Retrieval","Failure",e);
+                                        // Create a new Parse Object of CurrentWeather Class
+
+                                        ParseObject object = new ParseObject("CurrentWeather");
+                                        object.put("Temperature",tempC);
+                                        object.put("AppTemperature",appTempC);
+                                        object.put("Summary",summary);
+                                        object.put("DewPoint",dewPoint);
+                                        object.put("Pressure",pressure);
+                                        object.put("Humidity",humidity);
+                                        object.pinInBackground(new SaveCallback() {
+                                            @Override
+                                            public void done(ParseException e) {
+                                                if(e == null){
+                                                    Log.d("Current Weather Object Pinning","Success");
+                                                }else{
+                                                    Log.e("Parse Object Pinning","Failure",e);
+                                                }
+                                            }
+                                        });
                                     }
                                 }
                             });
@@ -443,6 +454,20 @@ public class CurrentFragment extends Fragment {
                     });
                 }else{
                     Log.d("Getting Parse Object",e.getMessage());
+                    // Create a new Parse Object of Class Location
+                    ParseObject locObject = new ParseObject("Location");
+                    locObject.put("Latitude",latitude);
+                    locObject.put("Longitude",longitude);
+                    locObject.pinInBackground(new SaveCallback() {
+                        @Override
+                        public void done(ParseException e) {
+                            if(e==null){
+                                Log.d("Location Object Creation","Success");
+                            }else{
+                                Log.e("Location Object Creation","Failure",e);
+                            }
+                        }
+                    });
                 }
             }
         });

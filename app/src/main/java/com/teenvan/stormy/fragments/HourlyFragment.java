@@ -89,7 +89,7 @@ public class HourlyFragment extends Fragment {
                     Log.d(getString(R.string.forecast_api_url),forecastURL);
                     setupHourlyNetworkConnection(forecastURL);
                 }else{
-                    Log.e("Location Object retrieval","failure",e);
+                    Log.e("Location Object retrieval HourlyFragment","failure",e);
                 }
             }
         });
