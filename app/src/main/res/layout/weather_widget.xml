@@ -1,0 +1,44 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:padding="10dp"
+                >
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/locationTextWidget"
+        android:text="Jaipur"
+        android:textColor="@android:color/white"
+        android:textSize="25sp"/>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/temperatureTextWidget"
+        android:layout_below="@+id/locationTextWidget"
+        android:text="26º"
+        android:textColor="@android:color/white"
+        android:textSize="35sp"
+        android:layout_marginTop="5dp"/>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/summaryTextWidget"
+        android:text="Mostly Cloudy"
+        android:textColor="@android:color/white"
+        android:layout_below="@+id/temperatureTextWidget"
+        android:textSize="25sp"
+        android:layout_marginTop="5dp"/>
+
+    <ImageView
+        android:layout_width="100dp"
+        android:layout_height="100dp"
+        android:id="@+id/weatherImageWidget"
+        android:src="@drawable/light_rain"
+        android:layout_alignTop="@+id/locationTextWidget"
+        android:layout_toRightOf="@+id/locationTextWidget"
+        android:layout_toEndOf="@+id/locationTextWidget"/>
+
+</RelativeLayout>

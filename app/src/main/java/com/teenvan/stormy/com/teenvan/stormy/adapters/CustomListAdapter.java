@@ -18,6 +18,7 @@ package com.teenvan.stormy.com.teenvan.stormy.adapters;
 
 import android.app.Activity;
 import android.graphics.Typeface;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -34,17 +35,20 @@ public class CustomListAdapter extends ArrayAdapter<String> {
 	private final ArrayList<String> temp;
     private final ArrayList<String> datetimeList;
     private final ArrayList<String> summaryList;
+    private final ArrayList<String> iconsList;
 
 
 
 	public CustomListAdapter(Activity context, ArrayList<String> temp,
                              ArrayList<String> datetimeList,
-                             ArrayList<String> summaryList) {
+                             ArrayList<String> summaryList,
+                             ArrayList<String> iconsList) {
 		super(context, R.layout.drawer_list_item, temp);
 		this.context = context;
 		this.temp = temp;
         this.datetimeList = datetimeList;
         this.summaryList = summaryList;
+        this.iconsList = iconsList;
 
 	}
 
@@ -73,12 +77,37 @@ public class CustomListAdapter extends ArrayAdapter<String> {
         holder.summary.setText(summaryList.get(position));
         holder.datetime.setText(datetimeList.get(position));
 
-        if(summaryList.get(position).equals("Drizzle")){
-            holder.imageView.setImageResource(R.drawable.drizzle);
-        }else if(summaryList.get(position).equals("Light Rain")){
-            holder.imageView.setImageResource(R.drawable.light_rain);
-        }else if(summaryList.get(position).equals("Mostly Cloudy")){
-            holder.imageView.setImageResource(R.drawable.cloudy);
+
+        if(iconsList.get(position).equals("clear-day")){
+            holder.imageView.setImageDrawable(context.getResources()
+                    .getDrawable(R.drawable.sunny));
+        }else  if(iconsList.get(position).equals("clear-night")){
+            holder.imageView.setImageDrawable(context.getResources()
+                    .getDrawable(R.drawable.clear_night));
+        }else  if(iconsList.get(position).equals("rain")){
+            holder.imageView.setImageDrawable(context.getResources()
+                    .getDrawable(R.drawable.rain));
+        }else  if(iconsList.get(position).equals("snow")){
+            holder.imageView.setImageDrawable(context.getResources()
+                    .getDrawable(R.drawable.snow));
+        }else  if(iconsList.get(position).equals("sleet")){
+            holder.imageView.setImageDrawable(context.getResources()
+                    .getDrawable(R.drawable.sleet));
+        }else  if(iconsList.get(position).equals("windy")){
+            holder.imageView.setImageDrawable(context.getResources()
+                    .getDrawable(R.drawable.windy));
+        }else  if(iconsList.get(position).equals("cloudy")){
+            holder.imageView.setImageDrawable(context.getResources()
+                    .getDrawable(R.drawable.cloudy));
+        }else  if(iconsList.get(position).equals("partly-cloudy-day")){
+            holder.imageView.setImageDrawable(context.getResources()
+                    .getDrawable(R.drawable.partly_cloudy_day));
+        }else  if(iconsList.get(position).equals("partly-cloudy-night")){
+            holder.imageView.setImageDrawable(context.getResources()
+                    .getDrawable(R.drawable.partly_cloudy_night));
+        }else{
+            holder.imageView.setImageDrawable(context.getResources()
+                    .getDrawable(R.drawable.sunny));
         }
 
 		return convertView;

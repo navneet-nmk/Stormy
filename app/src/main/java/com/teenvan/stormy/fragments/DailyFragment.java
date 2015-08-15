@@ -16,6 +16,7 @@ import com.teenvan.stormy.com.teenvan.stormy.adapters.CustomListAdapter;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.Dialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -32,6 +33,8 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.Window;
+import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.ListView;
 import android.widget.TextView;
@@ -53,7 +56,8 @@ public class DailyFragment extends Fragment {
     private double latitude = 37.8276;
     private double longitude = -122.423;
     private String forecastURL;
-    private ArrayList<String> temperatures,summaries,datetimes;
+    private ArrayList<String> temperatures,summaries,datetimes,iconList,
+            precipProbs,dewPoints,pressures,humidities,winds;
 
 
 	@Override
@@ -82,15 +86,51 @@ public class DailyFragment extends Fragment {
                     setupDailyNetworkConnection(forecastURL);
                 }else{
                     Log.e("DailyFragment Location Object Retrieval","Failure",e);
+                    Toast.makeText(getActivity(),"Bummer! There was an error.Please try again.",
+                            Toast.LENGTH_SHORT).show();
                 }
             }
         });
 
+        // On Item click listener
+        mDailyList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
+                final Dialog d = new Dialog(getActivity());
+                d.requestWindowFeature(Window.FEATURE_NO_TITLE);
+                d.setContentView(R.layout.dialog);
+                TextView title =  (TextView)d.findViewById(R.id.titleText);
+                TextView tempD = (TextView)d.findViewById(R.id.tempDText);
+                TextView precipD = (TextView)d.findViewById(R.id.precipProbabilityText);
+                TextView wind = (TextView)d.findViewById(R.id.windText);
+                TextView humid = (TextView)d.findViewById(R.id.humidityDText);
+                TextView pressure = (TextView)d.findViewById(R.id.pressureDText);
+                TextView dew = (TextView)d.findViewById(R.id.dewPointDtext);
+                TextView ok = (TextView)d.findViewById(R.id.okText);
+                ok.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        // Dismiss the dialog
+                        d.dismiss();
+                    }
+                });
+                // Get the data for the dialog
+                if(!temperatures.isEmpty() && !datetimes.isEmpty() && !humidities.isEmpty()
+                        && !dewPoints.isEmpty() && !pressures.isEmpty()
+                        && !winds.isEmpty() && !precipProbs.isEmpty()){
+                    tempD.setText("Temperature: "+temperatures.get(i)+"º");
+                        precipD.setText("Precip. Probability: "+precipProbs.get(i));
+                    title.setText(datetimes.get(i));
+                    wind.setText("Wind: "+winds.get(i));
+                    humid.setText("Humidity: "+humidities.get(i));
+                    pressure.setText("Pressure: "+pressures.get(i));
+                    dew.setText("Dew Point: "+ dewPoints.get(i)+"º");
+                }
+                // Show the dialog
+                d.show();
 
-
-
-
-
+            }
+        });
 
         return rootView;
 	}
@@ -117,20 +157,39 @@ public class DailyFragment extends Fragment {
                             temperatures = new ArrayList<String>();
                             summaries = new ArrayList<String>();
                             datetimes = new ArrayList<String>();
+                            iconList = new ArrayList<String>();
+                            humidities = new ArrayList<String>();
+                            pressures =new ArrayList<String>();
+                            dewPoints = new ArrayList<String>();
+                            winds = new ArrayList<String>();
+                            precipProbs =  new ArrayList<String>();
                             for(int i=0;i<mCurrentWeatherArray.size();i++){
                                 CurrentWeather mCW = mCurrentWeatherArray.get(i);
                                 String temp = Double.toString(mCW.getTemperature());
                                 String datetime = mCW.getFormattedTime();
                                 String day = mCW.getDayOfTheWeek(mCW.getTime());
                                 String summary = mCW.getSummary();
+                                String iconString = mCW.getIcon();
+                                String humidity = Double.toString(mCW.getHumidity()*100);
+                                String dewPoint = Double.toString(mCW.getDewPoint());
+                                String pressure = Double.toString(mCW.getPressure());
+                                String wind = Double.toString(mCW.getWindSpeed());
+                                String precip = Double.toString(mCW.getPrecipProbability());
+                                humidities.add(humidity);
+                                dewPoints.add(dewPoint);
+                                pressures.add(pressure);
                                 temperatures.add(temp);
                                 summaries.add(summary);
                                 datetimes.add(day);
+                                winds.add(wind);
+                                precipProbs.add(precip);
+                                iconList.add(iconString);
                             }
                             getActivity().runOnUiThread(new Runnable() {
                                 @Override
                                 public void run() {
-                                    CustomListAdapter adapter = new CustomListAdapter(getActivity(),temperatures,datetimes,summaries);
+                                    CustomListAdapter adapter = new CustomListAdapter(getActivity(),
+                                            temperatures,datetimes,summaries,iconList);
                                     mDailyList.setAdapter(adapter);
                                 }
                             });
@@ -172,6 +231,7 @@ public class DailyFragment extends Fragment {
             JSONObject currentForecast = data.getJSONObject(i);
             long time = currentForecast.getLong("time");
             String summaryHr = currentForecast.getString("summary");
+            String icon = currentForecast.getString("icon");
             // int nearestSD = currentForecast.getInt("nearestStormDistance");
             // int nearestSB = currentForecast.getInt("nearestStormBearing");
             int precipIntensity = currentForecast.getInt("precipIntensity");
@@ -192,7 +252,7 @@ public class DailyFragment extends Fragment {
             mCurrentWeather.setCloudCover(cloudCover);
             mCurrentWeather.setDewPoint(dewPoint);
             mCurrentWeather.setHumidity(humidity);
-            mCurrentWeather.setIcon(iconString);
+            mCurrentWeather.setIcon(icon);
             mCurrentWeather.setTimeZone(timezone);
             // mCurrentWeather.setNearestStormBearing(nearestSB);
             // mCurrentWeather.setNearestStormDistance(nearestSD);

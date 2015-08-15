@@ -42,6 +42,7 @@ import com.teenvan.stormy.CurrentWeather;
 import com.teenvan.stormy.MainActivity;
 import com.teenvan.stormy.R;
 import com.teenvan.stormy.com.teenvan.stormy.adapters.CustomListAdapter;
+import com.teenvan.stormy.services.WeatherService;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -95,6 +96,7 @@ public class CurrentFragment extends Fragment {
         mHumidity = (TextView)rootView.findViewById(R.id.humidityText);
         mPressure = (TextView)rootView.findViewById(R.id.pressureText);
         mLocationET = (EditText)rootView.findViewById(R.id.locationEditText);
+        mWeatherImage = (ImageView)rootView.findViewById(R.id.weatherImage);
         mSearchImage = (ImageView)rootView.findViewById(R.id.searchImage);
 
         ParseQuery<ParseObject> cwQuery = ParseQuery.getQuery("CurrentWeather");
@@ -103,6 +105,7 @@ public class CurrentFragment extends Fragment {
             @Override
             public void done(ParseObject parseObject, ParseException e) {
                 if( e== null){
+
                     mTemperature.setText(parseObject.getInt("Temperature")+"º");
                     mApparentTemperature.setText("Feels like "+
                             parseObject.getInt("AppTemperature")+"º");
@@ -251,7 +254,9 @@ public class CurrentFragment extends Fragment {
         forecastURL = forecastBaseURL + ApiKEY + "/" + Double.toString(latitude) + "," +
                 Double.toString(longitude);
         Log.d(getString(R.string.forecast_api_url),forecastURL);
-
+        Intent intent = new Intent(getActivity(), WeatherService.class);
+        intent.putExtra("ForecastURL",forecastURL);
+        getActivity().startService(intent);
 
         try {
             mLocation.setText(getLocationName(latitude,longitude));
@@ -347,6 +352,7 @@ public class CurrentFragment extends Fragment {
                             Double tempD = ((temp - 32)*5)/9;
                             final int tempC = tempD.intValue();
                             final int appTempC = tempE.intValue();
+                            final String iconString = mCurrentWeather.getIcon();
 
                             // Save the current weather data in parse local data store
                             ParseQuery<ParseObject> cQuery = ParseQuery.getQuery("CurrentWeather");
@@ -361,6 +367,7 @@ public class CurrentFragment extends Fragment {
                                             parseObject.put("DewPoint",dewPoint);
                                             parseObject.put("Pressure",pressure);
                                             parseObject.put("Humidity",humidity);
+                                            parseObject.put("Icon",iconString);
                                             // Pin in background
                                             parseObject.pinInBackground(new SaveCallback() {
                                                 @Override
@@ -384,6 +391,7 @@ public class CurrentFragment extends Fragment {
                                         object.put("DewPoint",dewPoint);
                                         object.put("Pressure",pressure);
                                         object.put("Humidity",humidity);
+                                        object.put("Icon",iconString);
                                         object.pinInBackground(new SaveCallback() {
                                             @Override
                                             public void done(ParseException e) {
@@ -405,6 +413,8 @@ public class CurrentFragment extends Fragment {
                                     mApparentTemperature.setText("Feels like "+Integer.toString(appTempC)+"º");
                                     mSummary.setText(summary);
                                     mDateTime.setText(datetime);
+                                    mWeatherImage.setImageDrawable(getResources().
+                                            getDrawable(getImageDrawable(iconString)));
                                     mDewPoint.setText("Dew Point: "+Double.toString(dewPoint));
                                     mPressure.setText("Pressure: "+Double.toString(pressure));
                                     mHumidity.setText("Humidity: "+Integer.toString(humidityLevel) +"%");
@@ -480,11 +490,19 @@ public class CurrentFragment extends Fragment {
         JSONObject forecast = new JSONObject(jsonData);
         String timezone = forecast.getString("timezone");
         JSONObject currentForecast = forecast.getJSONObject("currently");
-        String iconString = currentForecast.getString("icon");
+        final String iconString = currentForecast.getString("icon");
         String summary = currentForecast.getString("summary");
+
+        // Set the image icon
+        getActivity().runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                mWeatherImage.setImageDrawable(getResources()
+                        .getDrawable(getImageDrawable(iconString)));
+            }
+        });
+
         long time = currentForecast.getLong("time");
-        // int nearestSD = currentForecast.getInt("nearestStormDistance");
-        // int nearestSB = currentForecast.getInt("nearestStormBearing");
         int precipIntensity = currentForecast.getInt("precipIntensity");
         int precipProbability = currentForecast.getInt("precipProbability");
         Double temperature = currentForecast.getDouble("temperature");
@@ -591,6 +609,31 @@ public class CurrentFragment extends Fragment {
             Log.e("Class Cast","You need to implement interface in Activity",e);
         }
 
+    }
+    // Get the appropriate icon
+    public int getImageDrawable(String icon){
+        switch (icon){
+            case "clear-day":
+                return R.drawable.sunny;
+            case "clear-night":
+                return R.drawable.clear_night;
+            case "rain":
+                return R.drawable.rain;
+            case "snow":
+                return R.drawable.snow;
+            case "sleet":
+                return R.drawable.sleet;
+            case "windy":
+                return R.drawable.windy;
+            case "cloudy":
+                return R.drawable.cloudy;
+            case "partly-cloudy-day":
+                return R.drawable.partly_cloudy_day;
+            case "partly-cloudy-night":
+                return R.drawable.partly_cloudy_night;
+            default:
+                return R.drawable.sunny;
+        }
     }
 
 }

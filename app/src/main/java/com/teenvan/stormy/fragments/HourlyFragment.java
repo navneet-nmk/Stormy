@@ -3,6 +3,7 @@ package com.teenvan.stormy.fragments;
 
 
 import android.app.AlertDialog;
+import android.app.Dialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -21,6 +22,8 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.Window;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ListView;
@@ -63,7 +66,8 @@ public class HourlyFragment extends Fragment {
     private double latitude = 37.8276;
     private double longitude = -122.423;
     private String forecastURL;
-    private ArrayList<String> temperatures,summaries,datetimes;
+    private ArrayList<String> temperatures,summaries,datetimes,humidities,
+            dewPoints,winds,precips,pressures,iconsList;
 
 
     @Override
@@ -91,10 +95,47 @@ public class HourlyFragment extends Fragment {
                 }else{
                     Log.e("Location Object retrieval HourlyFragment","failure",e);
                 }
+
             }
         });
 
-
+        mHoursList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
+                final Dialog d = new Dialog(getActivity());
+                d.requestWindowFeature(Window.FEATURE_NO_TITLE);
+                d.setContentView(R.layout.dialog);
+                TextView date = (TextView)d.findViewById(R.id.titleText);
+                TextView tempD = (TextView)d.findViewById(R.id.tempDText);
+                TextView precipD = (TextView)d.findViewById(R.id.precipProbabilityText);
+                TextView wind = (TextView)d.findViewById(R.id.windText);
+                TextView humid = (TextView)d.findViewById(R.id.humidityDText);
+                TextView pressure = (TextView)d.findViewById(R.id.pressureDText);
+                TextView dew = (TextView)d.findViewById(R.id.dewPointDtext);
+                TextView ok = (TextView)d.findViewById(R.id.okText);
+                ok.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        // Dismiss the dialog
+                        d.dismiss();
+                    }
+                });
+                // Get the data for the dialog
+                if(!temperatures.isEmpty() && !datetimes.isEmpty() && !humidities.isEmpty()
+                        && !dewPoints.isEmpty() && !pressures.isEmpty()
+                        && !winds.isEmpty() && !precips.isEmpty()){
+                    tempD.setText("Temperature: "+temperatures.get(i)+"º");
+                    date.setText(datetimes.get(i));
+                    precipD.setText("Precip. Probability: "+precips.get(i));
+                    wind.setText("Wind: "+winds.get(i));
+                    humid.setText("Humidity: "+humidities.get(i));
+                    pressure.setText("Pressure: "+pressures.get(i));
+                    dew.setText("Dew Point: "+ dewPoints.get(i)+"º");
+                }
+                // Show the dialog
+                d.show();
+            }
+        });
 
         return rootView;
 	}
@@ -121,24 +162,43 @@ public class HourlyFragment extends Fragment {
                             temperatures = new ArrayList<String>();
                             summaries = new ArrayList<String>();
                             datetimes = new ArrayList<String>();
+                            humidities = new ArrayList<String>();
+                            dewPoints = new ArrayList<String>();
+                            precips = new ArrayList<String>();
+                            winds = new ArrayList<String>();
+                            pressures = new ArrayList<String>();
+                            iconsList = new ArrayList<String>();
                             // Creating parse objects
                             ParseObject tempObject = new ParseObject("Temperature");
                             final ParseObject summObject = new ParseObject("Summaries");
                             final ParseObject dateObject = new ParseObject("DateTime");
                             for(int i=0;i<mCurrentWeatherArray.size();i++){
                                 CurrentWeather mCW = mCurrentWeatherArray.get(i);
+                                String iconString = mCW.getIcon();
                                 String temp = Double.toString(mCW.getTemperature());
                                 String datetime = mCW.getFormattedTime();
                                 String summary = mCW.getSummary();
+                                String humidity = Double.toString(mCW.getHumidity());
+                                String dewPoint = Double.toString(mCW.getDewPoint());
+                                String precip = Double.toString(mCW.getPrecipProbability());
+                                String wind= Double.toString(mCW.getWindSpeed());
+                                String pressure = Double.toString(mCW.getPressure());
+
                                 temperatures.add(temp);
                                 summaries.add(summary);
                                 datetimes.add(datetime);
+                                humidities.add(humidity);
+                                dewPoints.add(dewPoint);
+                                precips.add(precip);
+                                winds.add(wind);
+                                pressures.add(pressure);
+                                iconsList.add(iconString);
                             }
                             getActivity().runOnUiThread(new Runnable() {
                                 @Override
                                 public void run() {
                                     CustomListAdapter adapter = new CustomListAdapter(getActivity(),
-                                            temperatures,datetimes,summaries);
+                                            temperatures,datetimes,summaries,iconsList);
                                     mHoursList.setAdapter(adapter);
                                 }
                             });
@@ -169,20 +229,19 @@ public class HourlyFragment extends Fragment {
         JSONObject hourlyForecast = forecast.getJSONObject("hourly");
         String iconString = hourlyForecast.getString("icon");
         final String summary = hourlyForecast.getString("summary");
-
+        getActivity().runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                mForecastText.setText(summary);
+            }
+        });
         JSONArray data = hourlyForecast.getJSONArray("data");
         ArrayList<CurrentWeather> mArray = new ArrayList<CurrentWeather>();
         for( int i=0;i<12;i++){
             JSONObject currentForecast = data.getJSONObject(i);
             long time = currentForecast.getLong("time");
             final String summaryHr = currentForecast.getString("summary");
-            getActivity().runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    mForecastText.setText(summaryHr);
-                }
-            });
-
+            String icon = currentForecast.getString("icon");
             // int nearestSD = currentForecast.getInt("nearestStormDistance");
             // int nearestSB = currentForecast.getInt("nearestStormBearing");
             int precipIntensity = currentForecast.getInt("precipIntensity");
@@ -199,11 +258,12 @@ public class HourlyFragment extends Fragment {
             Double ozone = currentForecast.getDouble("ozone");
             // Create the currentweather object
             CurrentWeather mCurrentWeather = new CurrentWeather();
+
             mCurrentWeather.setApparentTemperature(apparentTemp);
             mCurrentWeather.setCloudCover(cloudCover);
             mCurrentWeather.setDewPoint(dewPoint);
             mCurrentWeather.setHumidity(humidity);
-            mCurrentWeather.setIcon(iconString);
+            mCurrentWeather.setIcon(icon);
             mCurrentWeather.setTimeZone(timezone);
             // mCurrentWeather.setNearestStormBearing(nearestSB);
             // mCurrentWeather.setNearestStormDistance(nearestSD);
@@ -278,6 +338,10 @@ public class HourlyFragment extends Fragment {
                 Double.toString(longi);
         Log.d(getString(R.string.forecast_api_url),forecastURL);
         setupHourlyNetworkConnection(forecastURL);
+    }
+    public Double convertToC(Double fahren){
+        Double tempD = ((fahren - 32)*5)/9;
+        return tempD;
     }
 
 }

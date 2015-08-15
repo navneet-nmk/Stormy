@@ -2,6 +2,7 @@ package com.teenvan.stormy;
 
 import android.app.FragmentTransaction;
 import android.content.Context;
+import android.content.Intent;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.ActionBar;
@@ -12,6 +13,7 @@ import com.teenvan.stormy.com.teenvan.stormy.adapters.SectionsPagerAdapter;
 import com.teenvan.stormy.fragments.CurrentFragment;
 import com.teenvan.stormy.fragments.DailyFragment;
 import com.teenvan.stormy.fragments.HourlyFragment;
+import com.teenvan.stormy.services.WeatherService;
 
 
 public class MainActivity extends ActionBarActivity implements android.app.ActionBar.TabListener,CurrentFragment.SendLatLong {
