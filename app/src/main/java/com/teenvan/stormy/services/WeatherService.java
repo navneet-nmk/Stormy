@@ -47,7 +47,7 @@ public class WeatherService extends Service {
 		// TODO Auto-generated method stub
 		super.onCreate();
 		Log.d("Service", "Created");
-        Toast.makeText(getApplicationContext(),"Service started",Toast.LENGTH_LONG).show();
+
 
 
 	}
@@ -55,13 +55,14 @@ public class WeatherService extends Service {
 	@Override
 	public int onStartCommand(Intent intent, int flags, int startId) {
 		Log.d("Service", "Started");
-        forecastURL = intent.getStringExtra("ForecastURL");
-        if(forecastURL.isEmpty() ||forecastURL == null){
+        if(intent.getStringExtra("ForecastURL") !=null) {
+            forecastURL = intent.getStringExtra("ForecastURL");
+            if (forecastURL.isEmpty() || forecastURL == null) {
 
-        }else{
-            setupMinutelyNetworkConnection(forecastURL);
+            } else {
+                setupMinutelyNetworkConnection(forecastURL);
+            }
         }
-
 		return super.onStartCommand(intent, flags, startId);
 	}
 

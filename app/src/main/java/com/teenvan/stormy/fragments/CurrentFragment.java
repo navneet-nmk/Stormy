@@ -5,7 +5,6 @@ import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.graphics.Typeface;
 import android.location.Address;
 import android.location.Geocoder;
 import android.location.Location;
@@ -13,16 +12,13 @@ import android.location.LocationListener;
 import android.location.LocationManager;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
-import android.os.AsyncTask;
 import android.os.Bundle;
-import android.os.Handler;
 import android.provider.Settings;
 import android.support.v4.app.Fragment;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -39,25 +35,18 @@ import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.Request;
 import com.squareup.okhttp.Response;
 import com.teenvan.stormy.CurrentWeather;
-import com.teenvan.stormy.MainActivity;
 import com.teenvan.stormy.R;
-import com.teenvan.stormy.com.teenvan.stormy.adapters.CustomListAdapter;
 import com.teenvan.stormy.services.WeatherService;
 
-import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.w3c.dom.Text;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
-import javax.crypto.spec.GCMParameterSpec;
-
 import se.walkercrou.places.GooglePlaces;
-import se.walkercrou.places.Place;
 
 
 public class CurrentFragment extends Fragment {
@@ -65,7 +54,7 @@ public class CurrentFragment extends Fragment {
 	public TextView mLocation , mDateTime ,
             mTemperature , mApparentTemperature , mSummary ,
             mDewPoint ,mHumidity , mPressure;
-    private ImageView mWeatherImage , mDewPointImage , mHumidityImage , mPressureImage,mSearchImage;
+    private ImageView mWeatherImage,mSearchImage,mRefreshImage,mCurrentLocImage;
 
     private String ApiKEY = "cc360eb63a145e1a3956ebc14e34a247";
     private String forecastBaseURL = "https://api.forecast.io/forecast/";
@@ -83,7 +72,7 @@ public class CurrentFragment extends Fragment {
     @SuppressWarnings("deprecation")
 	public View onCreateView(LayoutInflater inflater, ViewGroup container,
 			Bundle savedInstanceState) {
-		View rootView = inflater.inflate(R.layout.fragment_time, container,
+		View rootView = inflater.inflate(R.layout.fragment_current, container,
 				false);
 
         // Referencing the UI elements
@@ -98,6 +87,12 @@ public class CurrentFragment extends Fragment {
         mLocationET = (EditText)rootView.findViewById(R.id.locationEditText);
         mWeatherImage = (ImageView)rootView.findViewById(R.id.weatherImage);
         mSearchImage = (ImageView)rootView.findViewById(R.id.searchImage);
+        mRefreshImage = (ImageView)rootView.findViewById(R.id.refreshImageView);
+        mCurrentLocImage = (ImageView)rootView.findViewById(R.id.currentLocationImage);
+
+
+
+
 
         ParseQuery<ParseObject> cwQuery = ParseQuery.getQuery("CurrentWeather");
         cwQuery.fromLocalDatastore();
@@ -181,7 +176,7 @@ public class CurrentFragment extends Fragment {
             dialog.setPositiveButton("Open Location Settings", new DialogInterface.OnClickListener() {
                 @Override
                 public void onClick(DialogInterface paramDialogInterface, int paramInt) {
-                    // TODO Auto-generated method stub
+
                     Intent myIntent = new Intent( Settings.ACTION_LOCATION_SOURCE_SETTINGS);
                    getActivity().startActivityForResult(myIntent,0);
                     //get gps
@@ -191,8 +186,6 @@ public class CurrentFragment extends Fragment {
 
                 @Override
                 public void onClick(DialogInterface paramDialogInterface, int paramInt) {
-                    // TODO Auto-generated method stub
-
 
                 }
             });
@@ -246,6 +239,47 @@ public class CurrentFragment extends Fragment {
                         }
                     });
                 }
+            }
+        });
+
+        mRefreshImage.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if (isNetworkAvailable()) {
+                    setupNetworkConnection(forecastURL);
+                }
+            }
+        });
+
+        mCurrentLocImage.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                // Get the current location
+                LocationManager locationManager = (LocationManager)getActivity().
+                        getSystemService(Context.LOCATION_SERVICE);
+                Location location = locationManager.
+                        getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
+                if(location != null){
+                    latitude = location.getLatitude();
+                    longitude = location.getLongitude();
+                }
+                Location gpsLocation = locationManager.
+                        getLastKnownLocation(LocationManager.GPS_PROVIDER);
+                if(location != null){
+                    latitude = location.getLatitude();
+                    longitude = location.getLongitude();
+                }
+                try {
+                    String cityName = getLocationName(latitude,longitude);
+                    mLocation.setText(cityName);
+
+                } catch (IOException e) {
+                    Log.e("IOException","Failure getting location name",e);
+                }
+                forecastURL = forecastBaseURL + ApiKEY + "/" + Double.toString(latitude) + "," +
+                        Double.toString(longitude);
+                setupNetworkConnection(forecastURL);
+
             }
         });
 

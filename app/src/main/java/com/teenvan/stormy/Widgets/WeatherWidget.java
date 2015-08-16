@@ -7,15 +7,27 @@ import android.location.Address;
 import android.location.Geocoder;
 import android.location.Location;
 import android.location.LocationManager;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.util.Log;
 import android.widget.RemoteViews;
+import android.widget.Toast;
 
 import com.parse.GetCallback;
 import com.parse.ParseException;
 import com.parse.ParseObject;
 import com.parse.ParseQuery;
 import com.parse.SaveCallback;
+import com.squareup.okhttp.Call;
+import com.squareup.okhttp.Callback;
+import com.squareup.okhttp.OkHttpClient;
+import com.squareup.okhttp.Request;
+import com.squareup.okhttp.Response;
+import com.teenvan.stormy.CurrentWeather;
 import com.teenvan.stormy.R;
+
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.io.IOException;
 import java.util.List;
@@ -28,16 +40,70 @@ public class WeatherWidget extends AppWidgetProvider {
     // Declaration of member variables
     private double latitude = 37.8276;
     private double longitude = -122.423;
+    private String locationName = "Jaipur";
+    private String forecastURL ;
+    private String ApiKEY = "cc360eb63a145e1a3956ebc14e34a247";
+    private String forecastBaseURL = "https://api.forecast.io/forecast/";
+    private String temperature = "26º";
+    private String summaryString = "Mostly Cloudy";
+    private int iconInt = R.drawable.rain;
+    private CurrentWeather mCurrentWeather;
 
     @Override
     public void onUpdate(Context context, AppWidgetManager appWidgetManager, int[] appWidgetIds) {
         // There may be multiple widgets active, so update all of them
         final int N = appWidgetIds.length;
         for (int i = 0; i < N; i++) {
-            updateAppWidget(context, appWidgetManager, appWidgetIds[i]);
+
+            int appWidgetId = appWidgetIds[i];
+
+                ParseQuery<ParseObject> cwQuery = ParseQuery.getQuery("CurrentWeather");
+                cwQuery.fromLocalDatastore();
+                cwQuery.getFirstInBackground(new GetCallback<ParseObject>() {
+                    @Override
+                    public void done(ParseObject parseObject, ParseException e) {
+                        if (e == null) {
+                            temperature = parseObject.getString("Temperature");
+                            summaryString = parseObject.getString("Summary");
+                            iconInt = getImageDrawable(parseObject.getString("Icon"));
+                        } else {
+                            Log.e("Current Weather Object Retrieval Widget", "Failure", e);
+                        }
+                    }
+                });
+
+            if(isNetworkAvailable(context)) {
+                // Get the location name
+                try {
+                    locationName = getLocation(context);
+                    Log.d("Location Name Widget", locationName);
+                } catch (IOException e) {
+                    Log.e("IO Exception", "Getting the location Name", e);
+                }
+
+                forecastURL = forecastBaseURL + ApiKEY + "/" + Double.toString(latitude) + "," +
+                        Double.toString(longitude);
+                if (!forecastURL.isEmpty()) {
+                    setupNetworkConnection(forecastURL, context);
+                }
+            }
+
+            CharSequence widgetText = locationName;
+            CharSequence tempText = temperature;
+            CharSequence summaryText = summaryString;
+
+            // Construct the RemoteViews object
+            RemoteViews views = new RemoteViews(context.getPackageName(), R.layout.weather_widget);
+            views.setTextViewText(R.id.locationTextWidget, widgetText);
+            views.setTextViewText(R.id.temperatureTextWidget,tempText);
+            views.setTextViewText(R.id.summaryTextWidget,summaryText);
+            views.setImageViewResource(R.id.weatherImageWidget,iconInt);
+
+            // Instruct the widget manager to update the widget
+            appWidgetManager.updateAppWidget(appWidgetId, views);
 
         }
-     
+
     }
 
 
@@ -50,29 +116,8 @@ public class WeatherWidget extends AppWidgetProvider {
     public void onDisabled(Context context) {
         // Enter relevant functionality for when the last widget is disabled
     }
-
-    static void updateAppWidget(Context context, AppWidgetManager appWidgetManager,
-                                int appWidgetId) {
-
-
-
-        CharSequence widgetText = "Jaipur";
-        CharSequence tempText = "26º";
-        CharSequence summaryText = "Mostly Cloudy";
-
-
-        // Construct the RemoteViews object
-        RemoteViews views = new RemoteViews(context.getPackageName(), R.layout.weather_widget);
-        views.setTextViewText(R.id.locationTextWidget, widgetText);
-        views.setTextViewText(R.id.temperatureTextWidget,tempText);
-        views.setTextViewText(R.id.summaryTextWidget,summaryText);
-        views.setImageViewResource(R.id.weatherImageWidget,R.drawable.light_rain);
-
-        // Instruct the widget manager to update the widget
-        appWidgetManager.updateAppWidget(appWidgetId, views);
-    }
     // Get the location data
-    public void getLocation(Context context){
+    public String getLocation(Context context) throws IOException {
         LocationManager locationManager = (LocationManager)context.
                 getSystemService(Context.LOCATION_SERVICE);
         Location location = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
@@ -85,6 +130,8 @@ public class WeatherWidget extends AppWidgetProvider {
             latitude = location.getLatitude();
             longitude = location.getLongitude();
         }
+
+        return  getLocationName(context,latitude,longitude);
     }
     // Get the location Name
     private String getLocationName(Context context,
@@ -99,12 +146,206 @@ public class WeatherWidget extends AppWidgetProvider {
         String stateName = addresses.get(0).getAddressLine(1);
         String countryName = addresses.get(0).getAddressLine(2);
         Log.d("Location Name",cityName);
-        return stateName;
+        return cityName;
 
     }
 
     // Get the weather data
+    public void setupNetworkConnection(String forecastURL,Context context){
+        if(isNetworkAvailable(context)) {
 
+            OkHttpClient client = new OkHttpClient();
+            Request request = new Request.Builder().url(forecastURL).build();
+            Call call = client.newCall(request);
+            call.enqueue(new Callback() {
+                @Override
+                public void onFailure(Request request, IOException e) {
+
+                }
+
+                @Override
+                public void onResponse(Response response) throws IOException {
+                    // Do something with the response
+                    if (response.isSuccessful()) {
+                        String jsonData = response.body().string();
+                        try {
+                            mCurrentWeather = getCurrentDetails(jsonData);
+                            final Double humidity = mCurrentWeather.getHumidity()*100;
+                            final int humidityLevel = humidity.intValue();
+                            final Double dewPoint = mCurrentWeather.getDewPoint();
+                            final Double pressure = mCurrentWeather.getPressure();
+                            final Double appTemp = mCurrentWeather.getApparentTemperature();
+                            final String summary = mCurrentWeather.getSummary();
+                            final String datetime = mCurrentWeather.getFormattedTime();
+                            Double temp = mCurrentWeather.getTemperature();
+                            final int tempF = temp.intValue();
+                            final int appTempF = appTemp.intValue();
+                            Double tempE = ((appTemp - 32)*5)/9;
+                            Double tempD = ((temp - 32)*5)/9;
+                            final int tempC = tempD.intValue();
+                            final int appTempC = tempE.intValue();
+                            final String iconString = mCurrentWeather.getIcon();
+
+                            temperature = tempC +"º";
+                            summaryString = summary;
+                            iconInt = getImageDrawable(iconString);
+
+
+                            // Save the current weather data in parse local data store
+                            ParseQuery<ParseObject> cQuery = ParseQuery.getQuery("CurrentWeather");
+                            cQuery.fromLocalDatastore();
+                            cQuery.getFirstInBackground(new GetCallback<ParseObject>() {
+                                @Override
+                                public void done(ParseObject parseObject, ParseException e) {
+                                    if( e == null){
+                                        parseObject.put("Temperature",tempC);
+                                        parseObject.put("AppTemperature",appTempC);
+                                        parseObject.put("Summary",summary);
+                                        parseObject.put("DewPoint",dewPoint);
+                                        parseObject.put("Pressure",pressure);
+                                        parseObject.put("Humidity",humidity);
+                                        parseObject.put("Icon",iconString);
+                                        // Pin in background
+                                        parseObject.pinInBackground(new SaveCallback() {
+                                            @Override
+                                            public void done(ParseException e) {
+                                                if( e == null){
+                                                    Log.d("Current Weather Object Updation",
+                                                            "Success");
+                                                }else{
+                                                    Log.e("Current Weather Object Updation",
+                                                            "Failure",e);
+                                                }
+                                            }
+                                        });
+
+                                    }else{
+                                        Log.e("Current Weather Object Retrieval","Failure",e);
+                                        // Create a new Parse Object of CurrentWeather Class
+
+                                        ParseObject object = new ParseObject("CurrentWeather");
+                                        object.put("Temperature",tempC);
+                                        object.put("AppTemperature",appTempC);
+                                        object.put("Summary",summary);
+                                        object.put("DewPoint",dewPoint);
+                                        object.put("Pressure",pressure);
+                                        object.put("Humidity",humidity);
+                                        object.put("Icon",iconString);
+                                        object.pinInBackground(new SaveCallback() {
+                                            @Override
+                                            public void done(ParseException e) {
+                                                if(e == null){
+                                                    Log.d("Current Weather Object Pinning",
+                                                            "Success");
+                                                }else{
+                                                    Log.e("Parse Object Pinning","Failure",e);
+                                                }
+                                            }
+                                        });
+                                    }
+                                }
+                            });
+
+
+
+                        } catch (JSONException e) {
+                            Log.e("JSON Error","Error",e);
+                        }
+
+
+                    } else {
+
+                    }
+                }
+            });
+
+        }else{
+
+        }
+    }
+
+    public CurrentWeather getCurrentDetails(String jsonData) throws JSONException {
+        // Create a JSONObject to handle the json data
+
+        JSONObject forecast = new JSONObject(jsonData);
+        String timezone = forecast.getString("timezone");
+        JSONObject currentForecast = forecast.getJSONObject("currently");
+        final String iconString = currentForecast.getString("icon");
+        String summary = currentForecast.getString("summary");
+        long time = currentForecast.getLong("time");
+        int precipIntensity = currentForecast.getInt("precipIntensity");
+        int precipProbability = currentForecast.getInt("precipProbability");
+        Double temperature = currentForecast.getDouble("temperature");
+        Double dewPoint = currentForecast.getDouble("dewPoint");
+        Double apparentTemp = currentForecast.getDouble("apparentTemperature");
+        Double humidity = currentForecast.getDouble("humidity");
+        Double windSpeed = currentForecast.getDouble("windSpeed");
+        int windBearing = currentForecast.getInt("windBearing");
+        //Double visibility = currentForecast.getDouble("visibility");
+        Double cloudCover = currentForecast.getDouble("cloudCover");
+        Double pressure = currentForecast.getDouble("pressure");
+        Double ozone = currentForecast.getDouble("ozone");
+
+
+        // Create the currentweather object
+        CurrentWeather mCurrentWeather = new CurrentWeather();
+        mCurrentWeather.setApparentTemperature(apparentTemp);
+        mCurrentWeather.setCloudCover(cloudCover);
+        mCurrentWeather.setDewPoint(dewPoint);
+        mCurrentWeather.setHumidity(humidity);
+        mCurrentWeather.setIcon(iconString);
+        mCurrentWeather.setTimeZone(timezone);
+          mCurrentWeather.setOzone(ozone);
+        mCurrentWeather.setPrecipIntensity(precipIntensity);
+        mCurrentWeather.setPrecipProbability(precipProbability);
+        mCurrentWeather.setTemperature(temperature);
+        mCurrentWeather.setTime(time);
+        mCurrentWeather.setPressure(pressure);
+            mCurrentWeather.setWindBearing(windBearing);
+        mCurrentWeather.setWindSpeed(windSpeed);
+        mCurrentWeather.setSummary(summary);
+
+
+        return mCurrentWeather;
+    }
+
+
+
+    private boolean isNetworkAvailable(Context context) {
+        ConnectivityManager manager = (ConnectivityManager)
+                context.getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo networkInfo = manager.getActiveNetworkInfo();
+        boolean isAvailable = false;
+        if(networkInfo != null && networkInfo.isConnected()){
+            isAvailable = true;
+        }
+        return isAvailable;
+    }
+    // Get the appropriate icon
+    public int getImageDrawable(String icon){
+        switch (icon){
+            case "clear-day":
+                return R.drawable.sunny;
+            case "clear-night":
+                return R.drawable.clear_night;
+            case "rain":
+                return R.drawable.rain;
+            case "snow":
+                return R.drawable.snow;
+            case "sleet":
+                return R.drawable.sleet;
+            case "windy":
+                return R.drawable.windy;
+            case "cloudy":
+                return R.drawable.cloudy;
+            case "partly-cloudy-day":
+                return R.drawable.partly_cloudy_day;
+            case "partly-cloudy-night":
+                return R.drawable.partly_cloudy_night;
+            default:
+                return R.drawable.sunny;
+        }
+    }
 
 }
 

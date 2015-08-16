@@ -10,7 +10,7 @@
         android:id="@+id/locationTextWidget"
         android:text="Jaipur"
         android:textColor="@android:color/white"
-        android:textSize="25sp"/>
+        android:textSize="20sp"/>
 
     <TextView
         android:layout_width="wrap_content"
@@ -29,7 +29,7 @@
         android:text="Mostly Cloudy"
         android:textColor="@android:color/white"
         android:layout_below="@+id/temperatureTextWidget"
-        android:textSize="25sp"
+        android:textSize="20sp"
         android:layout_marginTop="5dp"/>
 
     <ImageView
@@ -37,8 +37,8 @@
         android:layout_height="100dp"
         android:id="@+id/weatherImageWidget"
         android:src="@drawable/light_rain"
-        android:layout_alignTop="@+id/locationTextWidget"
-        android:layout_toRightOf="@+id/locationTextWidget"
-        android:layout_toEndOf="@+id/locationTextWidget"/>
+        android:layout_alignParentTop="true"
+        android:layout_toRightOf="@+id/summaryTextWidget"
+        android:layout_toEndOf="@+id/summaryTextWidget"/>
 
 </RelativeLayout>

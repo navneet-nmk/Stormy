@@ -122,6 +122,15 @@
             android:layout_height="40dp"
             android:id="@+id/humidityImage"
             android:src="@drawable/humidity"/>
+
+        <ImageView
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            android:id="@+id/refreshImageView"
+            android:src="@drawable/refresh"
+            android:layout_alignParentTop="true"
+            android:layout_alignParentRight="true"
+            android:layout_alignParentEnd="true"/>
     </RelativeLayout>
 
     <RelativeLayout
@@ -149,6 +158,16 @@
             android:layout_height="40dp"
             android:id="@+id/pressureImage"
             android:src="@drawable/pressure"/>
+
+        <ImageView
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            android:id="@+id/currentLocationImage"
+            android:layout_alignParentTop="true"
+            android:src="@drawable/current_location"
+            android:layout_alignParentRight="true"
+            android:layout_alignParentEnd="true"/>
+
     </RelativeLayout>
 
     <EditText
