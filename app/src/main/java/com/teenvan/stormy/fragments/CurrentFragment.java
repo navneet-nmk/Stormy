@@ -27,8 +27,10 @@ import android.widget.Toast;
 import com.parse.GetCallback;
 import com.parse.ParseException;
 import com.parse.ParseObject;
+import com.parse.ParsePush;
 import com.parse.ParseQuery;
 import com.parse.SaveCallback;
+import com.parse.SendCallback;
 import com.squareup.okhttp.Call;
 import com.squareup.okhttp.Callback;
 import com.squareup.okhttp.OkHttpClient;
@@ -390,7 +392,19 @@ public class CurrentFragment extends Fragment {
                             final int tempC = tempD.intValue();
                             final int appTempC = tempE.intValue();
                             final String iconString = mCurrentWeather.getIcon();
-
+                            //Send the push notification
+                            ParsePush push = new ParsePush();
+                            push.setMessage("Temperature right now is :"+tempC);
+                            push.sendInBackground(new SendCallback() {
+                                @Override
+                                public void done(ParseException e) {
+                                    if( e== null){
+                                        Log.d("Sending the push","Success");
+                                    }else{
+                                        Log.e("Sending the push","Failure",e);
+                                    }
+                                }
+                            });
                             // Save the current weather data in parse local data store
                             ParseQuery<ParseObject> cQuery = ParseQuery.getQuery("CurrentWeather");
                             cQuery.fromLocalDatastore();
@@ -466,13 +480,13 @@ public class CurrentFragment extends Fragment {
 
 
                     } else {
-                        Toast.makeText(getActivity(), getString(R.string.response_error), Toast.LENGTH_LONG).show();
+                        Toast.makeText(getActivity(), getString(R.string.response_error), Toast.LENGTH_SHORT).show();
                     }
                 }
             });
 
         }else{
-            Toast.makeText(getActivity(),getString(R.string.network_not_available),Toast.LENGTH_LONG).show();
+            Toast.makeText(getActivity(),getString(R.string.network_not_available),Toast.LENGTH_SHORT).show();
         }
     }
 

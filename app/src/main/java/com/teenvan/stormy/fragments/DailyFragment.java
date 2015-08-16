@@ -5,6 +5,7 @@ import com.parse.Parse;
 import com.parse.ParseException;
 import com.parse.ParseObject;
 import com.parse.ParseQuery;
+import com.parse.SaveCallback;
 import com.squareup.okhttp.Call;
 import com.squareup.okhttp.Callback;
 import com.squareup.okhttp.OkHttpClient;
@@ -69,6 +70,23 @@ public class DailyFragment extends Fragment {
         //Referencing the UI elements
         mDailyForecastText = (TextView)rootView.findViewById(R.id.dailyforecastText);
         mDailyList = (ListView)rootView.findViewById(R.id.dailyList);
+
+        if( !isNetworkAvailable()){
+            ParseQuery<ParseObject> query = new ParseQuery<ParseObject>("SummaryDaily");
+            query.fromLocalDatastore();
+            query.getFirstInBackground(new GetCallback<ParseObject>() {
+                @Override
+                public void done(ParseObject parseObject, ParseException e) {
+                    if( e== null){
+                        // Success
+                        mDailyForecastText.setText(parseObject.getString("Summary"));
+                    }else{
+                        Log.e("Summary Daily Object Retrieval","Failure",e);
+                    }
+                }
+            });
+        }
+
 
         // Get the parse object
         ParseQuery<ParseObject> locQuery = ParseQuery.getQuery("Location");
@@ -144,7 +162,8 @@ public class DailyFragment extends Fragment {
             call.enqueue(new Callback() {
                 @Override
                 public void onFailure(Request request, IOException e) {
-                    Log.e(getString(R.string.forecast_service), getString(R.string.error_string), e);
+                    Log.e(getString(R.string.forecast_service),
+                            getString(R.string.error_string), e);
                 }
 
                 @Override
@@ -153,7 +172,8 @@ public class DailyFragment extends Fragment {
                     if (response.isSuccessful()) {
                         String jsonData = response.body().string();
                         try {
-                            ArrayList<CurrentWeather> mCurrentWeatherArray = getCurrentDetails(jsonData);
+                            ArrayList<CurrentWeather> mCurrentWeatherArray =
+                                    getCurrentDetails(jsonData);
                             temperatures = new ArrayList<String>();
                             summaries = new ArrayList<String>();
                             datetimes = new ArrayList<String>();
@@ -185,6 +205,64 @@ public class DailyFragment extends Fragment {
                                 precipProbs.add(precip);
                                 iconList.add(iconString);
                             }
+
+                            // Create a parse object of Daily Forecast
+                            ParseQuery<ParseObject> dailyQuery = new
+                                    ParseQuery<ParseObject>("DailyForecast");
+                            dailyQuery.fromLocalDatastore();
+                            dailyQuery.getFirstInBackground(new GetCallback<ParseObject>() {
+                                @Override
+                                public void done(ParseObject parseObject, ParseException e) {
+                                    if( e== null){
+                                        // Parse Object found
+                                        // Update it with the new values
+                                        parseObject.put("Temperatures",temperatures);
+                                        parseObject.put("Humidities",humidities);
+                                        parseObject.put("DewPoints",dewPoints);
+                                        parseObject.put("Pressures",pressures);
+                                        parseObject.put("Summaries",summaries);
+                                        parseObject.put("DateTimes",datetimes);
+                                        parseObject.put("Winds",winds);
+                                        parseObject.put("PrecipProbs",precipProbs);
+                                        parseObject.put("Icons",iconList);
+                                        parseObject.pinInBackground(new SaveCallback() {
+                                            @Override
+                                            public void done(ParseException e) {
+                                                if( e== null){
+                                                    Log.d("Daily Object Updation","Success");
+                                                }else{
+                                                    Log.e("Daily Object Updation","Failure",
+                                                    e);
+                                                }
+                                            }
+                                        });
+                                    }else{
+                                        // Create a new Parse Object
+                                        ParseObject dailyObject = new ParseObject("DailyForecast");
+                                        dailyObject.put("Temperatures",temperatures);
+                                        dailyObject.put("Humidities",humidities);
+                                        dailyObject.put("DewPoints",dewPoints);
+                                        dailyObject.put("Pressures",pressures);
+                                        dailyObject.put("Summaries",summaries);
+                                        dailyObject.put("DateTimes",datetimes);
+                                        dailyObject.put("Winds",winds);
+                                        dailyObject.put("PrecipProbs",precipProbs);
+                                        dailyObject.put("Icons",iconList);
+                                        dailyObject.pinInBackground(new SaveCallback() {
+                                            @Override
+                                            public void done(ParseException e) {
+                                                if( e==null){
+                                                    Log.d("Daily Object Saving","Success");
+                                                }else{
+                                                    Log.e("Daily Object Saving","Failure",e);
+                                                }
+                                            }
+                                        });
+
+                                    }
+                                }
+                            });
+
                             getActivity().runOnUiThread(new Runnable() {
                                 @Override
                                 public void run() {
@@ -200,13 +278,41 @@ public class DailyFragment extends Fragment {
 
 
                     } else {
-                        Toast.makeText(getActivity(), getString(R.string.response_error), Toast.LENGTH_LONG).show();
+                        Toast.makeText(getActivity(), getString(R.string.response_error),
+                                Toast.LENGTH_SHORT).show();
                     }
                 }
             });
 
         }else{
-            Toast.makeText(getActivity(),getString(R.string.network_not_available),Toast.LENGTH_LONG).show();
+            Toast.makeText(getActivity(),getString(R.string.network_not_available),
+                    Toast.LENGTH_SHORT).show();
+            // Get the data from the Parse Local datastore
+            ParseQuery<ParseObject> query = new ParseQuery<ParseObject>("DailyForecast");
+            query.fromLocalDatastore();
+            query.getFirstInBackground(new GetCallback<ParseObject>() {
+                @Override
+                public void done(ParseObject parseObject, ParseException e) {
+                    if( e== null){
+                        temperatures = (ArrayList<String>) parseObject.get("Temperatures");
+                        summaries = (ArrayList<String>) parseObject.get("Summaries");
+                        datetimes = (ArrayList<String>) parseObject.get("DateTimes");
+                        dewPoints = (ArrayList<String>) parseObject.get("DewPoints");
+                        humidities = (ArrayList<String>) parseObject.get("Humidities");
+                        winds = (ArrayList<String>) parseObject.get("Winds");
+                        precipProbs = (ArrayList<String>) parseObject.get("PrecipProbs");
+                        pressures = (ArrayList<String>) parseObject.get("Pressures");
+                        iconList = (ArrayList<String>) parseObject.get("Icons");
+                        CustomListAdapter adapter = new CustomListAdapter(getActivity(),
+                                temperatures
+                        ,datetimes,summaries,iconList);
+                        mDailyList.setAdapter(adapter);
+                    }else{
+                        Toast.makeText(getActivity(),"No data available!",
+                                Toast.LENGTH_SHORT).show();
+                    }
+                }
+            });
         }
 
     }
@@ -225,6 +331,45 @@ public class DailyFragment extends Fragment {
                 mDailyForecastText.setText(summary);
             }
         });
+
+        // Create parse object if it does'nt exist
+        ParseQuery<ParseObject> query = new ParseQuery<ParseObject>("SummaryDaily");
+        query.fromLocalDatastore();
+        query.getFirstInBackground(new GetCallback<ParseObject>() {
+            @Override
+            public void done(ParseObject parseObject, ParseException e) {
+                if( e== null){
+                    // Object found
+                    // Update the object
+                    parseObject.put("Summary",summary);
+                    parseObject.pinInBackground(new SaveCallback() {
+                        @Override
+                        public void done(ParseException e) {
+                            if( e== null){
+                                Log.d("Summary Daily Updation","Success");
+                            }else{
+                                Log.e("Summary Daily Updation","Failure",e);
+                            }
+                        }
+                    });
+                }else{
+                    // Create a new Parse Object
+                    ParseObject object = new ParseObject("SummaryDaily");
+                    object.put("Summary",summary);
+                    object.pinInBackground(new SaveCallback() {
+                        @Override
+                        public void done(ParseException e) {
+                            if( e== null){
+                                Log.d("Summary Daily Creation","Success");
+                            }else{
+                                Log.e("Summary Daily Creation","Failure",e);
+                            }
+                        }
+                    });
+                }
+            }
+        });
+
         JSONArray data = hourlyForecast.getJSONArray("data");
         ArrayList<CurrentWeather> mArray = new ArrayList<CurrentWeather>();
         for( int i=0;i<6;i++){

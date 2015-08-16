@@ -286,6 +286,11 @@ public class HourlyFragment extends Fragment {
                         summaries = (ArrayList<String>) parseObject.get("Summaries");
                         datetimes = (ArrayList<String>) parseObject.get("DateTimes");
                         iconsList = (ArrayList<String>) parseObject.get("Icons");
+                        dewPoints = (ArrayList<String>) parseObject.get("DewPoints");
+                        humidities = (ArrayList<String>) parseObject.get("Humidities");
+                        winds = (ArrayList<String>) parseObject.get("Winds");
+                        precips = (ArrayList<String>) parseObject.get("Precips");
+                        pressures = (ArrayList<String>) parseObject.get("Pressures");
                         CustomListAdapter adapter = new CustomListAdapter(getActivity(),
                                 temperatures, datetimes, summaries, iconsList);
                         mHoursList.setAdapter(adapter);
