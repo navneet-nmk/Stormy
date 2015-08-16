@@ -44,7 +44,7 @@ public class WeatherWidget extends AppWidgetProvider {
     private String forecastURL ;
     private String ApiKEY = "cc360eb63a145e1a3956ebc14e34a247";
     private String forecastBaseURL = "https://api.forecast.io/forecast/";
-    private String temperature = "26º";
+    private String temperature = "28º";
     private String summaryString = "Mostly Cloudy";
     private int iconInt = R.drawable.rain;
     private CurrentWeather mCurrentWeather;
@@ -64,8 +64,9 @@ public class WeatherWidget extends AppWidgetProvider {
                     public void done(ParseObject parseObject, ParseException e) {
                         if (e == null) {
                             temperature = parseObject.getString("Temperature");
+                            // Log.d("Temp widget Parse",temperature);
                             summaryString = parseObject.getString("Summary");
-                            iconInt = getImageDrawable(parseObject.getString("Icon"));
+                           // Log.d("Summary widget Parse",summaryString);
                         } else {
                             Log.e("Current Weather Object Retrieval Widget", "Failure", e);
                         }
@@ -97,7 +98,7 @@ public class WeatherWidget extends AppWidgetProvider {
             views.setTextViewText(R.id.locationTextWidget, widgetText);
             views.setTextViewText(R.id.temperatureTextWidget,tempText);
             views.setTextViewText(R.id.summaryTextWidget,summaryText);
-            views.setImageViewResource(R.id.weatherImageWidget,iconInt);
+
 
             // Instruct the widget manager to update the widget
             appWidgetManager.updateAppWidget(appWidgetId, views);
@@ -175,7 +176,7 @@ public class WeatherWidget extends AppWidgetProvider {
                             final Double dewPoint = mCurrentWeather.getDewPoint();
                             final Double pressure = mCurrentWeather.getPressure();
                             final Double appTemp = mCurrentWeather.getApparentTemperature();
-                            final String summary = mCurrentWeather.getSummary();
+                            summaryString = mCurrentWeather.getSummary();
                             final String datetime = mCurrentWeather.getFormattedTime();
                             Double temp = mCurrentWeather.getTemperature();
                             final int tempF = temp.intValue();
@@ -187,66 +188,9 @@ public class WeatherWidget extends AppWidgetProvider {
                             final String iconString = mCurrentWeather.getIcon();
 
                             temperature = tempC +"º";
-                            summaryString = summary;
-                            iconInt = getImageDrawable(iconString);
+                            Log.d("Weather widget",temperature);
 
-
-                            // Save the current weather data in parse local data store
-                            ParseQuery<ParseObject> cQuery = ParseQuery.getQuery("CurrentWeather");
-                            cQuery.fromLocalDatastore();
-                            cQuery.getFirstInBackground(new GetCallback<ParseObject>() {
-                                @Override
-                                public void done(ParseObject parseObject, ParseException e) {
-                                    if( e == null){
-                                        parseObject.put("Temperature",tempC);
-                                        parseObject.put("AppTemperature",appTempC);
-                                        parseObject.put("Summary",summary);
-                                        parseObject.put("DewPoint",dewPoint);
-                                        parseObject.put("Pressure",pressure);
-                                        parseObject.put("Humidity",humidity);
-                                        parseObject.put("Icon",iconString);
-                                        // Pin in background
-                                        parseObject.pinInBackground(new SaveCallback() {
-                                            @Override
-                                            public void done(ParseException e) {
-                                                if( e == null){
-                                                    Log.d("Current Weather Object Updation",
-                                                            "Success");
-                                                }else{
-                                                    Log.e("Current Weather Object Updation",
-                                                            "Failure",e);
-                                                }
-                                            }
-                                        });
-
-                                    }else{
-                                        Log.e("Current Weather Object Retrieval","Failure",e);
-                                        // Create a new Parse Object of CurrentWeather Class
-
-                                        ParseObject object = new ParseObject("CurrentWeather");
-                                        object.put("Temperature",tempC);
-                                        object.put("AppTemperature",appTempC);
-                                        object.put("Summary",summary);
-                                        object.put("DewPoint",dewPoint);
-                                        object.put("Pressure",pressure);
-                                        object.put("Humidity",humidity);
-                                        object.put("Icon",iconString);
-                                        object.pinInBackground(new SaveCallback() {
-                                            @Override
-                                            public void done(ParseException e) {
-                                                if(e == null){
-                                                    Log.d("Current Weather Object Pinning",
-                                                            "Success");
-                                                }else{
-                                                    Log.e("Parse Object Pinning","Failure",e);
-                                                }
-                                            }
-                                        });
-                                    }
-                                }
-                            });
-
-
+                            Log.d("Summary Widget",summaryString);
 
                         } catch (JSONException e) {
                             Log.e("JSON Error","Error",e);
@@ -320,31 +264,6 @@ public class WeatherWidget extends AppWidgetProvider {
             isAvailable = true;
         }
         return isAvailable;
-    }
-    // Get the appropriate icon
-    public int getImageDrawable(String icon){
-        switch (icon){
-            case "clear-day":
-                return R.drawable.sunny;
-            case "clear-night":
-                return R.drawable.clear_night;
-            case "rain":
-                return R.drawable.rain;
-            case "snow":
-                return R.drawable.snow;
-            case "sleet":
-                return R.drawable.sleet;
-            case "windy":
-                return R.drawable.windy;
-            case "cloudy":
-                return R.drawable.cloudy;
-            case "partly-cloudy-day":
-                return R.drawable.partly_cloudy_day;
-            case "partly-cloudy-night":
-                return R.drawable.partly_cloudy_night;
-            default:
-                return R.drawable.sunny;
-        }
     }
 
 }

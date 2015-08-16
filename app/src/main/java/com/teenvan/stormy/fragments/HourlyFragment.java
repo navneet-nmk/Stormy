@@ -168,10 +168,7 @@ public class HourlyFragment extends Fragment {
                             winds = new ArrayList<String>();
                             pressures = new ArrayList<String>();
                             iconsList = new ArrayList<String>();
-                            // Creating parse objects
-                            ParseObject tempObject = new ParseObject("Temperature");
-                            final ParseObject summObject = new ParseObject("Summaries");
-                            final ParseObject dateObject = new ParseObject("DateTime");
+
                             for(int i=0;i<mCurrentWeatherArray.size();i++){
                                 CurrentWeather mCW = mCurrentWeatherArray.get(i);
                                 String iconString = mCW.getIcon();
@@ -194,6 +191,64 @@ public class HourlyFragment extends Fragment {
                                 pressures.add(pressure);
                                 iconsList.add(iconString);
                             }
+
+                            // Creating a ParseObject of Hourly Forecast
+                            ParseQuery<ParseObject> hrQuery = new
+                                    ParseQuery<ParseObject>("HourlyForecast");
+                            hrQuery.fromLocalDatastore();
+                            hrQuery.getFirstInBackground(new GetCallback<ParseObject>() {
+                                @Override
+                                public void done(ParseObject parseObject, ParseException e) {
+                                    if( e== null){
+                                        parseObject.put("Temperatures",temperatures);
+                                        parseObject.put("Summaries",summaries);
+                                        parseObject.put("DateTimes",datetimes);
+                                        parseObject.put("Humidities",humidities);
+                                        parseObject.put("DewPoints",dewPoints);
+                                        parseObject.put("Precips",precips);
+                                        parseObject.put("Winds",winds);
+                                        parseObject.put("Pressures",pressures);
+                                        parseObject.put("Icons",iconsList);
+                                        parseObject.pinInBackground(new SaveCallback() {
+                                            @Override
+                                            public void done(ParseException e) {
+                                                if( e== null){
+                                                    // Successfully updated
+                                                    Log.d("Hr Forecast Update","Success");
+                                                }else{
+                                                    Log.e("Hr Forecast Update","Failure",e);
+                                                }
+                                            }
+                                        });
+                                    }else{
+                                        ParseObject hrObject = new ParseObject("HourlyForecast");
+                                        hrObject.put("Temperatures",temperatures);
+                                        hrObject.put("Summaries",summaries);
+                                        hrObject.put("DateTimes",datetimes);
+                                        hrObject.put("Humidities",humidities);
+                                        hrObject.put("DewPoints",dewPoints);
+                                        hrObject.put("Precips",precips);
+                                        hrObject.put("Winds",winds);
+                                        hrObject.put("Pressures",pressures);
+                                        hrObject.put("Icons",iconsList);
+                                        hrObject.pinInBackground(new SaveCallback() {
+                                            @Override
+                                            public void done(ParseException e) {
+                                                if( e== null){
+                                                    Log.d("Hourly Fragment Saving","Success");
+                                                }else{
+                                                    Log.e("Hourly Fragment Saving","Failure",e);
+                                                }
+                                            }
+                                        });
+                                    }
+                                }
+                            });
+
+
+
+
+
                             getActivity().runOnUiThread(new Runnable() {
                                 @Override
                                 public void run() {
@@ -211,13 +266,49 @@ public class HourlyFragment extends Fragment {
 
 
                     } else {
-                        Toast.makeText(getActivity(), getString(R.string.response_error), Toast.LENGTH_LONG).show();
+                        Toast.makeText(getActivity(), getString(R.string.response_error),
+                                Toast.LENGTH_SHORT).show();
                     }
                 }
             });
 
         }else{
-            Toast.makeText(getActivity(),getString(R.string.network_not_available),Toast.LENGTH_LONG).show();
+            Toast.makeText(getActivity(),getString(R.string.network_not_available),
+                    Toast.LENGTH_SHORT).show();
+            ParseQuery<ParseObject> hourlyQuery = new ParseQuery<ParseObject>("HourlyForecast");
+            hourlyQuery.fromLocalDatastore();
+            hourlyQuery.getFirstInBackground(new GetCallback<ParseObject>() {
+                @Override
+                public void done(ParseObject parseObject, ParseException e) {
+                    if (e == null) {
+                        // Success
+                        temperatures = (ArrayList<String>) parseObject.get("Temperatures");
+                        summaries = (ArrayList<String>) parseObject.get("Summaries");
+                        datetimes = (ArrayList<String>) parseObject.get("DateTimes");
+                        iconsList = (ArrayList<String>) parseObject.get("Icons");
+                        CustomListAdapter adapter = new CustomListAdapter(getActivity(),
+                                temperatures, datetimes, summaries, iconsList);
+                        mHoursList.setAdapter(adapter);
+
+                    } else {
+                        Log.e("Hourly Forecast object retrieval", "Failure", e);
+                        Toast.makeText(getActivity(), "No data to show!",
+                                Toast.LENGTH_SHORT).show();
+                    }
+                }
+            });
+            ParseQuery<ParseObject> sumQuery = new ParseQuery<ParseObject>("HourlySummary");
+            sumQuery.fromLocalDatastore();
+            sumQuery.getFirstInBackground(new GetCallback<ParseObject>() {
+                @Override
+                public void done(ParseObject parseObject, ParseException e) {
+                    if( e == null){
+                        mForecastText.setText(parseObject.getString("Summary"));
+                    }else{
+                         Log.e("Hourly Summary object retrieval","Failure",e);
+                        }
+                }
+            });
         }
     }
 
@@ -229,6 +320,42 @@ public class HourlyFragment extends Fragment {
         JSONObject hourlyForecast = forecast.getJSONObject("hourly");
         String iconString = hourlyForecast.getString("icon");
         final String summary = hourlyForecast.getString("summary");
+
+        // Retrieve the parse object if it exists else create a new one
+        ParseQuery<ParseObject> sumQuery = new ParseQuery<ParseObject>("HourlySummary");
+        sumQuery.fromLocalDatastore();
+        sumQuery.getFirstInBackground(new GetCallback<ParseObject>() {
+            @Override
+            public void done(ParseObject parseObject, ParseException e) {
+                if(e == null){
+                    parseObject.put("Summary",summary);
+                    parseObject.pinInBackground(new SaveCallback() {
+                        @Override
+                        public void done(ParseException e) {
+                            if( e== null){
+                                Log.d("Summary Object Updation","Success");
+                            }else{
+                                Log.d("Summary Object Updation","Failure");
+                            }
+                        }
+                    });
+                }else{
+                    ParseObject summaryHourly = new ParseObject("HourlySummary");
+                    summaryHourly.put("Summary",summary);
+                    summaryHourly.pinInBackground(new SaveCallback() {
+                        @Override
+                        public void done(ParseException e) {
+                            if(e == null){
+                                Log.d("Summary Object Saving","Success");
+                            }else{
+                                Log.e("Summary Object Saving","Failure",e);
+                            }
+                        }
+                    });
+                }
+            }
+        });
+
         getActivity().runOnUiThread(new Runnable() {
             @Override
             public void run() {
@@ -342,6 +469,9 @@ public class HourlyFragment extends Fragment {
     public Double convertToC(Double fahren){
         Double tempD = ((fahren - 32)*5)/9;
         return tempD;
+    }
+    public void update(){
+        setupHourlyNetworkConnection(forecastURL);
     }
 
 }

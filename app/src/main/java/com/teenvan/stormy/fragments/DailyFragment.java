@@ -232,8 +232,6 @@ public class DailyFragment extends Fragment {
             long time = currentForecast.getLong("time");
             String summaryHr = currentForecast.getString("summary");
             String icon = currentForecast.getString("icon");
-            // int nearestSD = currentForecast.getInt("nearestStormDistance");
-            // int nearestSB = currentForecast.getInt("nearestStormBearing");
             int precipIntensity = currentForecast.getInt("precipIntensity");
             int precipProbability = currentForecast.getInt("precipProbability");
             Double temperature = currentForecast.getDouble("temperatureMax");
@@ -242,7 +240,6 @@ public class DailyFragment extends Fragment {
             Double humidity = currentForecast.getDouble("humidity");
             Double windSpeed = currentForecast.getDouble("windSpeed");
             int windBearing = currentForecast.getInt("windBearing");
-            //Double visibility = currentForecast.getDouble("visibility");
             Double cloudCover = currentForecast.getDouble("cloudCover");
             Double pressure = currentForecast.getDouble("pressure");
             Double ozone = currentForecast.getDouble("ozone");
@@ -254,15 +251,12 @@ public class DailyFragment extends Fragment {
             mCurrentWeather.setHumidity(humidity);
             mCurrentWeather.setIcon(icon);
             mCurrentWeather.setTimeZone(timezone);
-            // mCurrentWeather.setNearestStormBearing(nearestSB);
-            // mCurrentWeather.setNearestStormDistance(nearestSD);
             mCurrentWeather.setOzone(ozone);
             mCurrentWeather.setPrecipIntensity(precipIntensity);
             mCurrentWeather.setPrecipProbability(precipProbability);
             mCurrentWeather.setTemperature(temperature);
             mCurrentWeather.setTime(time);
             mCurrentWeather.setPressure(pressure);
-            //mCurrentWeather.setVisibility(visibility);
             mCurrentWeather.setWindBearing(windBearing);
             mCurrentWeather.setWindSpeed(windSpeed);
             mCurrentWeather.setSummary(summaryHr);
@@ -286,6 +280,10 @@ public class DailyFragment extends Fragment {
         forecastURL = forecastBaseURL + ApiKEY + "/" + Double.toString(lat) + "," +
                 Double.toString(longi);
         Log.d(getString(R.string.forecast_api_url), forecastURL);
+        setupDailyNetworkConnection(forecastURL);
+    }
+
+    public void update(){
         setupDailyNetworkConnection(forecastURL);
     }
 

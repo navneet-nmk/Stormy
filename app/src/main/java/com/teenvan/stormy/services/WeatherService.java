@@ -8,14 +8,19 @@ import java.util.Calendar;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
+import android.location.Location;
+import android.location.LocationManager;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.IBinder;
 import android.util.Log;
 import android.widget.Toast;
 
+import com.parse.GetCallback;
 import com.parse.ParseException;
+import com.parse.ParseObject;
 import com.parse.ParsePush;
+import com.parse.ParseQuery;
 import com.parse.SendCallback;
 import com.squareup.okhttp.Call;
 import com.squareup.okhttp.Callback;
@@ -32,6 +37,10 @@ import org.json.JSONObject;
 public class WeatherService extends Service {
 
 	private String forecastURL = "";
+    private String ApiKEY = "cc360eb63a145e1a3956ebc14e34a247";
+    private String forecastBaseURL = "https://api.forecast.io/forecast/";
+    private double latitude = 37.8276;
+    private double longitude = -122.423;
 
 
 	@Override
@@ -55,13 +64,45 @@ public class WeatherService extends Service {
 	@Override
 	public int onStartCommand(Intent intent, int flags, int startId) {
 		Log.d("Service", "Started");
-        if(intent.getStringExtra("ForecastURL") !=null) {
-            forecastURL = intent.getStringExtra("ForecastURL");
-            if (forecastURL.isEmpty() || forecastURL == null) {
+        if(!isNetworkAvailable()) {
+            ParseQuery<ParseObject> locQuery = ParseQuery.getQuery("Location");
+            locQuery.fromLocalDatastore();
+            locQuery.getFirstInBackground(new GetCallback<ParseObject>() {
+                @Override
+                public void done(ParseObject parseObject, ParseException e) {
+                    if (e == null) {
+                        latitude = parseObject.getDouble("Latitude");
+                        longitude = parseObject.getDouble("Longitude");
+                        // Getting the JSON data
+                        forecastURL = forecastBaseURL + ApiKEY + "/" + Double.toString(latitude) + "," +
+                                Double.toString(longitude);
+                        Log.d(getString(R.string.forecast_api_url), forecastURL);
+                        setupMinutelyNetworkConnection(forecastURL);
+                    } else {
+                        Log.e("Location Object retrieval HourlyFragment", "failure", e);
+                    }
 
-            } else {
-                setupMinutelyNetworkConnection(forecastURL);
+                }
+            });
+        }else{
+
+            LocationManager locationManager = (LocationManager)getApplicationContext().
+                    getSystemService(Context.LOCATION_SERVICE);
+
+            Location location = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
+            if(location != null){
+                latitude = location.getLatitude();
+                longitude = location.getLongitude();
             }
+            Location gpsLocation = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+            if(location != null){
+                latitude = location.getLatitude();
+                longitude = location.getLongitude();
+            }
+            forecastURL = forecastBaseURL + ApiKEY + "/" + Double.toString(latitude) + "," +
+                    Double.toString(longitude);
+            setupMinutelyNetworkConnection(forecastURL);
+
         }
 		return super.onStartCommand(intent, flags, startId);
 	}

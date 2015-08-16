@@ -66,6 +66,7 @@ public class CurrentFragment extends Fragment {
     private GooglePlaces client = new GooglePlaces(googleApiKey);
     private EditText mLocationET;
     SendLatLong mSendLatLong;
+
     private ArrayList<String> temperatures,summaries,datetimes;
 
 
@@ -247,6 +248,7 @@ public class CurrentFragment extends Fragment {
             public void onClick(View view) {
                 if (isNetworkAvailable()) {
                     setupNetworkConnection(forecastURL);
+                    mSendLatLong.updateData();
                 }
             }
         });
@@ -279,6 +281,7 @@ public class CurrentFragment extends Fragment {
                 forecastURL = forecastBaseURL + ApiKEY + "/" + Double.toString(latitude) + "," +
                         Double.toString(longitude);
                 setupNetworkConnection(forecastURL);
+                mSendLatLong.sendLatLong(latitude,longitude);
 
             }
         });
@@ -632,6 +635,9 @@ public class CurrentFragment extends Fragment {
 
     public interface SendLatLong{
         public void sendLatLong(Double lat,Double longitude);
+        public void updateData();
+
+
     }
 
     @Override

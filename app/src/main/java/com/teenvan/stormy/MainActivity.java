@@ -78,4 +78,17 @@ public class MainActivity extends ActionBarActivity implements android.app.Actio
             dailyFragment.updateListView(lat,longitude);
         }
     }
+
+    @Override
+    public void updateData() {
+        HourlyFragment hourlyFragment = (HourlyFragment)mSectionAdapter.getRegisteredFragment(1);
+        DailyFragment dailyFragment = (DailyFragment)mSectionAdapter.getRegisteredFragment(2);
+        if(hourlyFragment != null){
+         hourlyFragment.update();
+        }if(dailyFragment != null){
+            dailyFragment.update();
+        }
+    }
+
+
 }
