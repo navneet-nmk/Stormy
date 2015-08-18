@@ -32,6 +32,8 @@ import org.json.JSONObject;
 import java.io.IOException;
 import java.util.List;
 import java.util.Locale;
+import java.util.Timer;
+import java.util.TimerTask;
 
 /**
  * Implementation of App Widget functionality.
@@ -57,37 +59,14 @@ public class WeatherWidget extends AppWidgetProvider {
 
             int appWidgetId = appWidgetIds[i];
 
-                ParseQuery<ParseObject> cwQuery = ParseQuery.getQuery("CurrentWeather");
-                cwQuery.fromLocalDatastore();
-                cwQuery.getFirstInBackground(new GetCallback<ParseObject>() {
-                    @Override
-                    public void done(ParseObject parseObject, ParseException e) {
-                        if (e == null) {
-                            temperature = parseObject.getString("Temperature");
-                            // Log.d("Temp widget Parse",temperature);
-                            summaryString = parseObject.getString("Summary");
-                           // Log.d("Summary widget Parse",summaryString);
-                        } else {
-                            Log.e("Current Weather Object Retrieval Widget", "Failure", e);
-                        }
-                    }
-                });
-
-            if(isNetworkAvailable(context)) {
-                // Get the location name
-                try {
-                    locationName = getLocation(context);
-                    Log.d("Location Name Widget", locationName);
-                } catch (IOException e) {
-                    Log.e("IO Exception", "Getting the location Name", e);
+            Timer timer = new Timer();
+            TimerTask hourTask = new TimerTask() {
+                @Override
+                public void run() {
+                        getWeatherDetails();
                 }
-
-                forecastURL = forecastBaseURL + ApiKEY + "/" + Double.toString(latitude) + "," +
-                        Double.toString(longitude);
-                if (!forecastURL.isEmpty()) {
-                    setupNetworkConnection(forecastURL, context);
-                }
-            }
+            };
+            timer.schedule(hourTask,500*60*60);
 
             CharSequence widgetText = locationName;
             CharSequence tempText = temperature;
@@ -151,120 +130,25 @@ public class WeatherWidget extends AppWidgetProvider {
 
     }
 
-    // Get the weather data
-    public void setupNetworkConnection(String forecastURL,Context context){
-        if(isNetworkAvailable(context)) {
+    public void getWeatherDetails(){
+        // Getting the parse object
+        ParseQuery<ParseObject> query = new ParseQuery<ParseObject>("CurrentWeather");
+        query.fromLocalDatastore();
+        query.getFirstInBackground(new GetCallback<ParseObject>() {
+            @Override
+            public void done(ParseObject parseObject, ParseException e) {
+                if( e== null){
+                    temperature = parseObject.getInt("Temperature")+"º";
+                    summaryString = parseObject.getString("Summary");
 
-            OkHttpClient client = new OkHttpClient();
-            Request request = new Request.Builder().url(forecastURL).build();
-            Call call = client.newCall(request);
-            call.enqueue(new Callback() {
-                @Override
-                public void onFailure(Request request, IOException e) {
-
+                }else{
+                    Log.e("Getting current weather object","Failure",e);
                 }
-
-                @Override
-                public void onResponse(Response response) throws IOException {
-                    // Do something with the response
-                    if (response.isSuccessful()) {
-                        String jsonData = response.body().string();
-                        try {
-                            mCurrentWeather = getCurrentDetails(jsonData);
-                            final Double humidity = mCurrentWeather.getHumidity()*100;
-                            final int humidityLevel = humidity.intValue();
-                            final Double dewPoint = mCurrentWeather.getDewPoint();
-                            final Double pressure = mCurrentWeather.getPressure();
-                            final Double appTemp = mCurrentWeather.getApparentTemperature();
-                            summaryString = mCurrentWeather.getSummary();
-                            final String datetime = mCurrentWeather.getFormattedTime();
-                            Double temp = mCurrentWeather.getTemperature();
-                            final int tempF = temp.intValue();
-                            final int appTempF = appTemp.intValue();
-                            Double tempE = ((appTemp - 32)*5)/9;
-                            Double tempD = ((temp - 32)*5)/9;
-                            final int tempC = tempD.intValue();
-                            final int appTempC = tempE.intValue();
-                            final String iconString = mCurrentWeather.getIcon();
-
-                            temperature = tempC +"º";
-                            Log.d("Weather widget",temperature);
-
-                            Log.d("Summary Widget",summaryString);
-
-                        } catch (JSONException e) {
-                            Log.e("JSON Error","Error",e);
-                        }
-
-
-                    } else {
-
-                    }
-                }
-            });
-
-        }else{
-
-        }
-    }
-
-    public CurrentWeather getCurrentDetails(String jsonData) throws JSONException {
-        // Create a JSONObject to handle the json data
-
-        JSONObject forecast = new JSONObject(jsonData);
-        String timezone = forecast.getString("timezone");
-        JSONObject currentForecast = forecast.getJSONObject("currently");
-        final String iconString = currentForecast.getString("icon");
-        String summary = currentForecast.getString("summary");
-        long time = currentForecast.getLong("time");
-        int precipIntensity = currentForecast.getInt("precipIntensity");
-        int precipProbability = currentForecast.getInt("precipProbability");
-        Double temperature = currentForecast.getDouble("temperature");
-        Double dewPoint = currentForecast.getDouble("dewPoint");
-        Double apparentTemp = currentForecast.getDouble("apparentTemperature");
-        Double humidity = currentForecast.getDouble("humidity");
-        Double windSpeed = currentForecast.getDouble("windSpeed");
-        int windBearing = currentForecast.getInt("windBearing");
-        //Double visibility = currentForecast.getDouble("visibility");
-        Double cloudCover = currentForecast.getDouble("cloudCover");
-        Double pressure = currentForecast.getDouble("pressure");
-        Double ozone = currentForecast.getDouble("ozone");
-
-
-        // Create the currentweather object
-        CurrentWeather mCurrentWeather = new CurrentWeather();
-        mCurrentWeather.setApparentTemperature(apparentTemp);
-        mCurrentWeather.setCloudCover(cloudCover);
-        mCurrentWeather.setDewPoint(dewPoint);
-        mCurrentWeather.setHumidity(humidity);
-        mCurrentWeather.setIcon(iconString);
-        mCurrentWeather.setTimeZone(timezone);
-          mCurrentWeather.setOzone(ozone);
-        mCurrentWeather.setPrecipIntensity(precipIntensity);
-        mCurrentWeather.setPrecipProbability(precipProbability);
-        mCurrentWeather.setTemperature(temperature);
-        mCurrentWeather.setTime(time);
-        mCurrentWeather.setPressure(pressure);
-            mCurrentWeather.setWindBearing(windBearing);
-        mCurrentWeather.setWindSpeed(windSpeed);
-        mCurrentWeather.setSummary(summary);
-
-
-        return mCurrentWeather;
+            }
+        });
     }
 
 
-
-    private boolean isNetworkAvailable(Context context) {
-        ConnectivityManager manager = (ConnectivityManager)
-                context.getSystemService(Context.CONNECTIVITY_SERVICE);
-        NetworkInfo networkInfo = manager.getActiveNetworkInfo();
-        boolean isAvailable = false;
-        if(networkInfo != null && networkInfo.isConnected()){
-            isAvailable = true;
-        }
-        return isAvailable;
-    }
 
 }
 

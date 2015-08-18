@@ -374,8 +374,6 @@ public class HourlyFragment extends Fragment {
             long time = currentForecast.getLong("time");
             final String summaryHr = currentForecast.getString("summary");
             String icon = currentForecast.getString("icon");
-            // int nearestSD = currentForecast.getInt("nearestStormDistance");
-            // int nearestSB = currentForecast.getInt("nearestStormBearing");
             int precipIntensity = currentForecast.getInt("precipIntensity");
             int precipProbability = currentForecast.getInt("precipProbability");
             Double temperature = currentForecast.getDouble("temperature");

@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import android.app.Service;
 import android.content.Context;
@@ -14,13 +16,13 @@ import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.IBinder;
 import android.util.Log;
-import android.widget.Toast;
 
 import com.parse.GetCallback;
 import com.parse.ParseException;
 import com.parse.ParseObject;
 import com.parse.ParsePush;
 import com.parse.ParseQuery;
+import com.parse.SaveCallback;
 import com.parse.SendCallback;
 import com.squareup.okhttp.Call;
 import com.squareup.okhttp.Callback;
@@ -74,10 +76,20 @@ public class WeatherService extends Service {
                         latitude = parseObject.getDouble("Latitude");
                         longitude = parseObject.getDouble("Longitude");
                         // Getting the JSON data
-                        forecastURL = forecastBaseURL + ApiKEY + "/" + Double.toString(latitude) + "," +
+                        forecastURL = forecastBaseURL + ApiKEY + "/" +
+                                Double.toString(latitude) + "," +
                                 Double.toString(longitude);
                         Log.d(getString(R.string.forecast_api_url), forecastURL);
-                        setupMinutelyNetworkConnection(forecastURL);
+
+                        // Setup a timer object
+                        Timer timer = new Timer();
+                        TimerTask task= new TimerTask() {
+                            @Override
+                            public void run() {
+                                setupMinutelyNetworkConnection(forecastURL);
+                            }
+                        };
+                        timer.schedule(task,500*60*60);
                     } else {
                         Log.e("Location Object retrieval HourlyFragment", "failure", e);
                     }
@@ -89,19 +101,29 @@ public class WeatherService extends Service {
             LocationManager locationManager = (LocationManager)getApplicationContext().
                     getSystemService(Context.LOCATION_SERVICE);
 
-            Location location = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
+            Location location = locationManager.getLastKnownLocation
+                    (LocationManager.NETWORK_PROVIDER);
             if(location != null){
                 latitude = location.getLatitude();
                 longitude = location.getLongitude();
             }
-            Location gpsLocation = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+            Location gpsLocation = locationManager.getLastKnownLocation
+                    (LocationManager.GPS_PROVIDER);
             if(location != null){
                 latitude = location.getLatitude();
                 longitude = location.getLongitude();
             }
             forecastURL = forecastBaseURL + ApiKEY + "/" + Double.toString(latitude) + "," +
                     Double.toString(longitude);
-            setupMinutelyNetworkConnection(forecastURL);
+            Timer timer = new Timer();
+            TimerTask task =new TimerTask() {
+                @Override
+                public void run() {
+                    setupMinutelyNetworkConnection(forecastURL);
+                }
+            };
+            timer.schedule(task,500*60*60);
+
 
         }
 		return super.onStartCommand(intent, flags, startId);
@@ -146,7 +168,7 @@ public class WeatherService extends Service {
                         String jsonData = response.body().string();
                         try {
                             ArrayList<CurrentWeather> mCurrentWeatherArray =
-                                    getHourlyCurrentDetails(jsonData);
+                                    getMinutelyCurrentDetails(jsonData);
 
                             for(int i=0;i<mCurrentWeatherArray.size();i++){
                                 CurrentWeather mCW = mCurrentWeatherArray.get(i);
@@ -167,14 +189,91 @@ public class WeatherService extends Service {
                                     });
                                     break;
                                 }
+
+
                             }
+                            // Get the current weather object
+                            CurrentWeather mCurrentWeather = getCurrentDetails(jsonData);
+                            mCurrentWeather = getCurrentDetails(jsonData);
+                            final Double humidity = mCurrentWeather.getHumidity()*100;
+                            final int humidityLevel = humidity.intValue();
+                            final Double dewPoint = mCurrentWeather.getDewPoint();
+                            final Double pressure = mCurrentWeather.getPressure();
+                            final Double appTemp = mCurrentWeather.getApparentTemperature();
+                            final String summary = mCurrentWeather.getSummary();
+                            final String datetime = mCurrentWeather.getFormattedTime();
+                            Double temp = mCurrentWeather.getTemperature();
+                            final int tempF = temp.intValue();
+                            final int appTempF = appTemp.intValue();
+                            Double tempE = ((appTemp - 32)*5)/9;
+                            Double tempD = ((temp - 32)*5)/9;
+                            final int tempC = tempD.intValue();
+                            final int appTempC = tempE.intValue();
+                            final String iconString = mCurrentWeather.getIcon();
+
+                            // Create a parse object
+                            ParseQuery<ParseObject> query = new
+                                    ParseQuery<ParseObject>("CurrentWeather");
+                            query.fromLocalDatastore();
+                            query.getFirstInBackground(new GetCallback<ParseObject>() {
+                                @Override
+                                public void done(ParseObject parseObject, ParseException e) {
+                                    if( e== null){
+                                        // Success finding the object
+                                        parseObject.put("Temperature",tempC);
+                                        parseObject.put("AppTemperature",appTempC);
+                                        parseObject.put("Summary",summary);
+                                        parseObject.put("DewPoint",dewPoint);
+                                        parseObject.put("Pressure",pressure);
+                                        parseObject.put("Humidity",humidity);
+                                        parseObject.put("Icon",iconString);
+
+                                        parseObject.pinInBackground(new SaveCallback() {
+                                            @Override
+                                            public void done(ParseException e) {
+                                                if( e== null){
+                                                    Log.d("Success saving object"
+                                                    ,"Success");
+                                                }else{
+                                                    Log.e("Saving object","Failure",e);
+                                                }
+                                            }
+                                        });
+                                    }else{
+                                        // Create a new Parse Object
+                                        Log.e("Current Weather Object Retrieval","Failure",e);
+                                        // Create a new Parse Object of CurrentWeather Class
+                                        ParseObject object = new ParseObject("CurrentWeather");
+                                        object.put("Temperature",tempC);
+                                        object.put("AppTemperature",appTempC);
+                                        object.put("Summary",summary);
+                                        object.put("DewPoint",dewPoint);
+                                        object.put("Pressure",pressure);
+                                        object.put("Humidity",humidity);
+                                        object.put("Icon",iconString);
+                                        object.pinInBackground(new SaveCallback() {
+                                            @Override
+                                            public void done(ParseException e) {
+                                                if(e == null){
+                                                    Log.d("Current Weather Object Pinning",
+                                                            "Success");
+                                                }else{
+                                                    Log.e("Parse Object Pinning","Failure",e);
+                                                }
+                                            }
+                                        });
+                                    }
+                                }
+                            });
+
+
                         } catch (JSONException e) {
                             e.printStackTrace();
                         }
 
 
                     } else {
-
+                        Log.e("Service Response","Failure");
                     }
                 }
             });
@@ -184,7 +283,8 @@ public class WeatherService extends Service {
         }
     }
 
-    public ArrayList<CurrentWeather> getHourlyCurrentDetails(String jsonData) throws JSONException {
+    public ArrayList<CurrentWeather> getMinutelyCurrentDetails(String jsonData)
+            throws JSONException {
         // Create a JSONObject to handle the json data
 
         JSONObject forecast = new JSONObject(jsonData);
@@ -213,6 +313,61 @@ public class WeatherService extends Service {
             ArrayList<CurrentWeather> mArray = new ArrayList<>();
             return mArray;
         }
+
+    }
+
+
+    public CurrentWeather getCurrentDetails(String jsonData) throws JSONException {
+        // Create a JSONObject to handle the json data
+        // Create a JSONObject to handle the json data
+
+        JSONObject forecast = new JSONObject(jsonData);
+        String timezone = forecast.getString("timezone");
+        JSONObject currentForecast = forecast.getJSONObject("currently");
+        final String iconString = currentForecast.getString("icon");
+        String summary = currentForecast.getString("summary");
+
+
+        long time = currentForecast.getLong("time");
+        int precipIntensity = currentForecast.getInt("precipIntensity");
+        int precipProbability = currentForecast.getInt("precipProbability");
+        Double temperature = currentForecast.getDouble("temperature");
+        Double dewPoint = currentForecast.getDouble("dewPoint");
+        Double apparentTemp = currentForecast.getDouble("apparentTemperature");
+        Double humidity = currentForecast.getDouble("humidity");
+        Double windSpeed = currentForecast.getDouble("windSpeed");
+        int windBearing = currentForecast.getInt("windBearing");
+        //Double visibility = currentForecast.getDouble("visibility");
+        Double cloudCover = currentForecast.getDouble("cloudCover");
+        Double pressure = currentForecast.getDouble("pressure");
+        Double ozone = currentForecast.getDouble("ozone");
+
+        Log.d("MainActivity",Double.toString(currentForecast.getDouble("temperature")));
+
+        // Create the currentweather object
+        CurrentWeather mCurrentWeather = new CurrentWeather();
+        mCurrentWeather.setApparentTemperature(apparentTemp);
+        mCurrentWeather.setCloudCover(cloudCover);
+        mCurrentWeather.setDewPoint(dewPoint);
+        mCurrentWeather.setHumidity(humidity);
+        mCurrentWeather.setIcon(iconString);
+        mCurrentWeather.setTimeZone(timezone);
+        // mCurrentWeather.setNearestStormBearing(nearestSB);
+        // mCurrentWeather.setNearestStormDistance(nearestSD);
+        mCurrentWeather.setOzone(ozone);
+        mCurrentWeather.setPrecipIntensity(precipIntensity);
+        mCurrentWeather.setPrecipProbability(precipProbability);
+        mCurrentWeather.setTemperature(temperature);
+        mCurrentWeather.setTime(time);
+        mCurrentWeather.setPressure(pressure);
+        //mCurrentWeather.setVisibility(visibility);
+        mCurrentWeather.setWindBearing(windBearing);
+        mCurrentWeather.setWindSpeed(windSpeed);
+        mCurrentWeather.setSummary(summary);
+
+
+        return mCurrentWeather;
+
 
     }
     private boolean isNetworkAvailable() {
