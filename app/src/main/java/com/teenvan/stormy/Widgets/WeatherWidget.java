@@ -142,7 +142,7 @@ public class WeatherWidget extends AppWidgetProvider {
                     summaryString = parseObject.getString("Summary");
 
                 }else{
-                    Log.e("Getting current weather object","Failure",e);
+                    Log.e("Getting current weather object Widget","Failure",e);
                 }
             }
         });
