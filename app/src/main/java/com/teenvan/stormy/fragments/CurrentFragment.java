@@ -24,6 +24,8 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.android.gms.ads.AdRequest;
+import com.google.android.gms.ads.AdView;
 import com.parse.GetCallback;
 import com.parse.ParseException;
 import com.parse.ParseObject;
@@ -68,6 +70,7 @@ public class CurrentFragment extends Fragment {
     private GooglePlaces client = new GooglePlaces(googleApiKey);
     private EditText mLocationET;
     SendLatLong mSendLatLong;
+    private AdView adView;
 
     private ArrayList<String> temperatures,summaries,datetimes;
 
@@ -79,6 +82,7 @@ public class CurrentFragment extends Fragment {
 				false);
 
         // Referencing the UI elements
+        adView = (AdView)rootView.findViewById(R.id.ad);
         mLocation = (TextView)rootView.findViewById(R.id.locationText);
         mDateTime = (TextView)rootView.findViewById(R.id.datetimetext);
         mTemperature = (TextView)rootView.findViewById(R.id.temperatureText);
@@ -94,6 +98,7 @@ public class CurrentFragment extends Fragment {
         mCurrentLocImage = (ImageView)rootView.findViewById(R.id.currentLocationImage);
 
 
+        // AdRequest request = new AdRequest.Builder().addTestDevice().build();
 
 
 
@@ -148,7 +153,8 @@ public class CurrentFragment extends Fragment {
                 }
             });
         }else if(locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)){
-            locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER,0,0,new LocationListener() {
+            locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER,0,0,
+                    new LocationListener() {
                 @Override
                 public void onLocationChanged(Location location) {
                     latitude = location.getLatitude();
@@ -391,6 +397,8 @@ public class CurrentFragment extends Fragment {
                             Double tempD = ((temp - 32)*5)/9;
                             final int tempC = tempD.intValue();
                             final int appTempC = tempE.intValue();
+                            final int dewPointC = getTempFromF(dewPoint);
+                            final String time = mCurrentWeather.getFormattedTime();
                             final String iconString = mCurrentWeather.getIcon();
                             //Send the push notification
                             ParsePush push = new ParsePush();
@@ -419,14 +427,17 @@ public class CurrentFragment extends Fragment {
                                             parseObject.put("Pressure",pressure);
                                             parseObject.put("Humidity",humidity);
                                             parseObject.put("Icon",iconString);
+                                            parseObject.put("Time",time);
                                             // Pin in background
                                             parseObject.pinInBackground(new SaveCallback() {
                                                 @Override
                                                 public void done(ParseException e) {
                                                     if( e == null){
-                                                        Log.d("Current Weather Object Updation","Success");
+                                                        Log.d("Current Weather Object Updation",
+                                                                "Success");
                                                     }else{
-                                                        Log.e("Current Weather Object Updation","Failure",e);
+                                                        Log.e("Current Weather Object Updation",
+                                                                "Failure",e);
                                                     }
                                                 }
                                             });
@@ -443,11 +454,13 @@ public class CurrentFragment extends Fragment {
                                         object.put("Pressure",pressure);
                                         object.put("Humidity",humidity);
                                         object.put("Icon",iconString);
+                                        object.put("Time",time);
                                         object.pinInBackground(new SaveCallback() {
                                             @Override
                                             public void done(ParseException e) {
                                                 if(e == null){
-                                                    Log.d("Current Weather Object Pinning","Success");
+                                                    Log.d("Current Weather Object Pinning",
+                                                            "Success");
                                                 }else{
                                                     Log.e("Parse Object Pinning","Failure",e);
                                                 }
@@ -461,14 +474,16 @@ public class CurrentFragment extends Fragment {
                                 @Override
                                 public void run() {
                                     mTemperature.setText(Integer.toString(tempC)+"º");
-                                    mApparentTemperature.setText("Feels like "+Integer.toString(appTempC)+"º");
+                                    mApparentTemperature.setText("Feels like "+
+                                            Integer.toString(appTempC)+"º");
                                     mSummary.setText(summary);
                                     mDateTime.setText(datetime);
                                     mWeatherImage.setImageDrawable(getResources().
                                             getDrawable(getImageDrawable(iconString)));
-                                    mDewPoint.setText("Dew Point: "+Double.toString(dewPoint));
+                                    mDewPoint.setText(Integer.toString(dewPointC)+"º");
                                     mPressure.setText("Pressure: "+Double.toString(pressure));
-                                    mHumidity.setText("Humidity: "+Integer.toString(humidityLevel) +"%");
+                                    mHumidity.setText("Humidity: "+
+                                            Integer.toString(humidityLevel) +"%");
                                 }
                             });
 
@@ -562,7 +577,6 @@ public class CurrentFragment extends Fragment {
         Double humidity = currentForecast.getDouble("humidity");
         Double windSpeed = currentForecast.getDouble("windSpeed");
         int windBearing = currentForecast.getInt("windBearing");
-        //Double visibility = currentForecast.getDouble("visibility");
         Double cloudCover = currentForecast.getDouble("cloudCover");
         Double pressure = currentForecast.getDouble("pressure");
         Double ozone = currentForecast.getDouble("ozone");
@@ -577,15 +591,12 @@ public class CurrentFragment extends Fragment {
         mCurrentWeather.setHumidity(humidity);
         mCurrentWeather.setIcon(iconString);
         mCurrentWeather.setTimeZone(timezone);
-        // mCurrentWeather.setNearestStormBearing(nearestSB);
-        // mCurrentWeather.setNearestStormDistance(nearestSD);
         mCurrentWeather.setOzone(ozone);
         mCurrentWeather.setPrecipIntensity(precipIntensity);
         mCurrentWeather.setPrecipProbability(precipProbability);
         mCurrentWeather.setTemperature(temperature);
         mCurrentWeather.setTime(time);
         mCurrentWeather.setPressure(pressure);
-        //mCurrentWeather.setVisibility(visibility);
         mCurrentWeather.setWindBearing(windBearing);
         mCurrentWeather.setWindSpeed(windSpeed);
         mCurrentWeather.setSummary(summary);
@@ -597,7 +608,8 @@ public class CurrentFragment extends Fragment {
 
 
     private boolean isNetworkAvailable() {
-        ConnectivityManager manager = (ConnectivityManager)getActivity().getSystemService(Context.CONNECTIVITY_SERVICE);
+        ConnectivityManager manager = (ConnectivityManager)getActivity().
+                getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkInfo networkInfo = manager.getActiveNetworkInfo();
         boolean isAvailable = false;
         if(networkInfo != null && networkInfo.isConnected()){
@@ -689,5 +701,10 @@ public class CurrentFragment extends Fragment {
                 return R.drawable.sunny;
         }
     }
-
+    // Convert from fahrenheit to celsius
+    public int getTempFromF(Double temp){
+        Double tempD = ((temp - 32)*5)/9;
+        final int tempC = tempD.intValue();
+        return tempC;
+    }
 }

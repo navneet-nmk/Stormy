@@ -140,7 +140,7 @@ public class DailyFragment extends Fragment {
                         precipD.setText("Precip. Probability: "+precipProbs.get(i));
                     title.setText(datetimes.get(i));
                     wind.setText("Wind: "+winds.get(i));
-                    humid.setText("Humidity: "+humidities.get(i));
+                    humid.setText("Humidity: "+humidities.get(i) +"%");
                     pressure.setText("Pressure: "+pressures.get(i));
                     dew.setText("Dew Point: "+ dewPoints.get(i)+"º");
                 }
@@ -191,7 +191,9 @@ public class DailyFragment extends Fragment {
                                 String summary = mCW.getSummary();
                                 String iconString = mCW.getIcon();
                                 String humidity = Double.toString(mCW.getHumidity()*100);
-                                String dewPoint = Double.toString(mCW.getDewPoint());
+                                Double dewPointF = mCW.getDewPoint();
+                                int dewPointC = convertToC(dewPointF);
+                                String dewPoint = Integer.toString(dewPointC);
                                 String pressure = Double.toString(mCW.getPressure());
                                 String wind = Double.toString(mCW.getWindSpeed());
                                 String precip = Double.toString(mCW.getPrecipProbability());
@@ -426,6 +428,13 @@ public class DailyFragment extends Fragment {
                 Double.toString(longi);
         Log.d(getString(R.string.forecast_api_url), forecastURL);
         setupDailyNetworkConnection(forecastURL);
+    }
+
+
+    public int convertToC(Double fahren){
+        Double tempD = ((fahren - 32)*5)/9;
+        int temp = tempD.intValue();
+        return temp;
     }
 
     public void update(){

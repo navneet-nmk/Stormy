@@ -48,9 +48,7 @@ public class WeatherService extends Service {
 	@Override
 	public IBinder onBind(Intent intent) {
 		// TODO Auto-generated method stub
-        forecastURL = intent.getStringExtra("ForecastURL");
-		// Toast.makeText(this, username, Toast.LENGTH_LONG).show();
-		return null;
+     	return null;
 	}
 
 	@Override
@@ -89,9 +87,9 @@ public class WeatherService extends Service {
                                 setupMinutelyNetworkConnection(forecastURL);
                             }
                         };
-                        timer.schedule(task,500*60*60);
+                        timer.schedule(task,1000*60*60);
                     } else {
-                        Log.e("Location Object retrieval HourlyFragment", "failure", e);
+                        Log.e("Location HourlyFragment", "Failure", e);
                     }
 
                 }
@@ -122,7 +120,7 @@ public class WeatherService extends Service {
                     setupMinutelyNetworkConnection(forecastURL);
                 }
             };
-            timer.schedule(task,500*60*60);
+            timer.schedule(task,1000*60*60);
 
 
         }
@@ -210,6 +208,7 @@ public class WeatherService extends Service {
                             final int tempC = tempD.intValue();
                             final int appTempC = tempE.intValue();
                             final String iconString = mCurrentWeather.getIcon();
+                            final String time = mCurrentWeather.getFormattedTime();
 
                             // Create a parse object
                             ParseQuery<ParseObject> query = new
@@ -227,21 +226,23 @@ public class WeatherService extends Service {
                                         parseObject.put("Pressure",pressure);
                                         parseObject.put("Humidity",humidity);
                                         parseObject.put("Icon",iconString);
+                                        parseObject.put("Time",time);
 
                                         parseObject.pinInBackground(new SaveCallback() {
                                             @Override
                                             public void done(ParseException e) {
                                                 if( e== null){
-                                                    Log.d("Success saving object"
+                                                    Log.d("Saving Service"
                                                     ,"Success");
                                                 }else{
-                                                    Log.e("Saving object","Failure",e);
+                                                    Log.e("Service Saving object",
+                                                            "Failure",e);
                                                 }
                                             }
                                         });
                                     }else{
                                         // Create a new Parse Object
-                                        Log.e("Current Weather Object Retrieval","Failure",e);
+                                        Log.e("Current Retrieval","Failure",e);
                                         // Create a new Parse Object of CurrentWeather Class
                                         ParseObject object = new ParseObject("CurrentWeather");
                                         object.put("Temperature",tempC);
@@ -251,14 +252,16 @@ public class WeatherService extends Service {
                                         object.put("Pressure",pressure);
                                         object.put("Humidity",humidity);
                                         object.put("Icon",iconString);
+                                        object.put("Time",time);
                                         object.pinInBackground(new SaveCallback() {
                                             @Override
                                             public void done(ParseException e) {
                                                 if(e == null){
-                                                    Log.d("Current Weather Object Pinning",
+                                                    Log.d("Current Weather Service",
                                                             "Success");
                                                 }else{
-                                                    Log.e("Parse Object Pinning","Failure",e);
+                                                    Log.e("Pinning Service",
+                                                            "Failure",e);
                                                 }
                                             }
                                         });

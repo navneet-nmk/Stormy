@@ -176,7 +176,9 @@ public class HourlyFragment extends Fragment {
                                 String datetime = mCW.getFormattedTime();
                                 String summary = mCW.getSummary();
                                 String humidity = Double.toString(mCW.getHumidity());
-                                String dewPoint = Double.toString(mCW.getDewPoint());
+                                Double dewPointF = mCW.getDewPoint();
+                                int dewPointC = convertToC(dewPointF);
+                                String dewPoint = Integer.toString(dewPointC);
                                 String precip = Double.toString(mCW.getPrecipProbability());
                                 String wind= Double.toString(mCW.getWindSpeed());
                                 String pressure = Double.toString(mCW.getPressure());
@@ -469,9 +471,10 @@ public class HourlyFragment extends Fragment {
         Log.d(getString(R.string.forecast_api_url),forecastURL);
         setupHourlyNetworkConnection(forecastURL);
     }
-    public Double convertToC(Double fahren){
+    public int convertToC(Double fahren){
         Double tempD = ((fahren - 32)*5)/9;
-        return tempD;
+        int temp = tempD.intValue();
+        return temp;
     }
     public void update(){
         setupHourlyNetworkConnection(forecastURL);
