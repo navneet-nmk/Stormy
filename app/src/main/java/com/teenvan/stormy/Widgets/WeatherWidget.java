@@ -48,39 +48,77 @@ public class WeatherWidget extends AppWidgetProvider {
     private String forecastBaseURL = "https://api.forecast.io/forecast/";
     private String temperature = "28º";
     private String summaryString = "Mostly Cloudy";
+    private String appTemperature ="Feels like 26º";
+    private String hourSummary = "Partly Cloudy until tomorrow morning";
     private int iconInt = R.drawable.rain;
     private CurrentWeather mCurrentWeather;
 
     @Override
-    public void onUpdate(Context context, AppWidgetManager appWidgetManager, int[] appWidgetIds) {
+    public void onUpdate(final Context context,final AppWidgetManager appWidgetManager,
+                         final int[] appWidgetIds) {
         // There may be multiple widgets active, so update all of them
         final int N = appWidgetIds.length;
         for (int i = 0; i < N; i++) {
 
-            int appWidgetId = appWidgetIds[i];
+            final int appWidgetId = appWidgetIds[i];
 
-            Timer timer = new Timer();
-            TimerTask hourTask = new TimerTask() {
+            final RemoteViews views =
+                    new RemoteViews(context.getPackageName(), R.layout.weather_widget);
+
+            // Getting the parse object for weather
+            ParseQuery<ParseObject> query = ParseQuery.getQuery("CurrentWeather");
+            query.fromLocalDatastore();
+            query.getFirstInBackground(new GetCallback<ParseObject>() {
                 @Override
-                public void run() {
-                        getWeatherDetails();
+                public void done(ParseObject parseObject, ParseException e) {
+                    if (e == null) {
+                        Log.d("Widget", "Success");
+                        temperature = parseObject.getInt("Temperature") + "º";
+                        summaryString = parseObject.getString("Summary");
+                        locationName = parseObject.getString("Location");
+                        views.setTextViewText(R.id.locationTextWidget,locationName);
+                        views.setTextViewText(R.id.temperatureTextWidget, temperature);
+                        views.setTextViewText(R.id.summaryTextWidget, summaryString);
+                        appWidgetManager.updateAppWidget(appWidgetId, views);
+                    } else {
+                        Log.e("Widget", "Failure", e);
+
+                        CharSequence tempText = temperature;
+                        CharSequence summaryText = summaryString;
+                        CharSequence locText = locationName;
+
+                        // Construct the RemoteViews object
+                        views.setTextViewText(R.id.locationTextWidget,locText);
+                        views.setTextViewText(R.id.temperatureTextWidget, tempText);
+                        views.setTextViewText(R.id.summaryTextWidget, summaryText);
+                        appWidgetManager.updateAppWidget(appWidgetId, views);
+                    }
                 }
-            };
-            timer.schedule(hourTask,500*60*60);
+            });
 
-            CharSequence widgetText = locationName;
-            CharSequence tempText = temperature;
-            CharSequence summaryText = summaryString;
+            // Getting the parse object for hourly summary
+            ParseQuery<ParseObject> hourlyQuery = ParseQuery.getQuery("HourlySummary");
+            hourlyQuery.fromLocalDatastore();
+            hourlyQuery.getFirstInBackground(new GetCallback<ParseObject>() {
+                @Override
+                public void done(ParseObject parseObject, ParseException e) {
+                    if( e==null){
+                        hourSummary = parseObject.getString("Summary");
+                        CharSequence hourSummaryText = hourSummary;
+                        views.setTextViewText(R.id.nextHourForecastWidget,hourSummaryText);
+                        appWidgetManager.updateAppWidget(appWidgetId, views);
+                    }else{
+                        Log.e("Widget Summary","Failure",e);
+                        CharSequence hourSummaryText = hourSummary;
+                        views.setTextViewText(R.id.nextHourForecastWidget,hourSummaryText);
+                        appWidgetManager.updateAppWidget(appWidgetId, views);
+                    }
+                }
+            });
 
-            // Construct the RemoteViews object
-            RemoteViews views = new RemoteViews(context.getPackageName(), R.layout.weather_widget);
-            views.setTextViewText(R.id.locationTextWidget, widgetText);
-            views.setTextViewText(R.id.temperatureTextWidget,tempText);
-            views.setTextViewText(R.id.summaryTextWidget,summaryText);
 
 
-            // Instruct the widget manager to update the widget
-            appWidgetManager.updateAppWidget(appWidgetId, views);
+
 
         }
 
@@ -130,19 +168,23 @@ public class WeatherWidget extends AppWidgetProvider {
 
     }
 
-    public void getWeatherDetails(){
+    public void getWeatherDetails(final Context context){
         // Getting the parse object
-        ParseQuery<ParseObject> query = new ParseQuery<ParseObject>("CurrentWeather");
+        ParseQuery<ParseObject> query = ParseQuery.getQuery("CurrentWeather");
         query.fromLocalDatastore();
         query.getFirstInBackground(new GetCallback<ParseObject>() {
             @Override
             public void done(ParseObject parseObject, ParseException e) {
                 if( e== null){
+                    Log.d("Widget","Success");
                     temperature = parseObject.getInt("Temperature")+"º";
                     summaryString = parseObject.getString("Summary");
-
+                    RemoteViews views = new RemoteViews(context.getPackageName(),
+                            R.layout.weather_widget);
+                    views.setTextViewText(R.id.temperatureTextWidget,temperature);
+                    views.setTextViewText(R.id.summaryTextWidget,summaryString);
                 }else{
-                    Log.e("Getting current weather object Widget","Failure",e);
+                    Log.e("Widget","Failure",e);
                 }
             }
         });

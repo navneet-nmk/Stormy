@@ -71,7 +71,9 @@ public class CurrentFragment extends Fragment {
     private EditText mLocationET;
     SendLatLong mSendLatLong;
     private AdView adView;
-
+     String locationName = "Jaipur";
+    Double latitudeWid;
+    Double longitudeWid;
     private ArrayList<String> temperatures,summaries,datetimes;
 
 
@@ -99,7 +101,7 @@ public class CurrentFragment extends Fragment {
 
 
         // AdRequest request = new AdRequest.Builder().addTestDevice().build();
-
+        AdRequest request = new AdRequest.Builder().build();
 
 
         ParseQuery<ParseObject> cwQuery = ParseQuery.getQuery("CurrentWeather");
@@ -108,7 +110,7 @@ public class CurrentFragment extends Fragment {
             @Override
             public void done(ParseObject parseObject, ParseException e) {
                 if( e== null){
-
+                    mLocation.setText(parseObject.getString("Location"));
                     mTemperature.setText(parseObject.getInt("Temperature")+"º");
                     mApparentTemperature.setText("Feels like "+
                             parseObject.getInt("AppTemperature")+"º");
@@ -382,6 +384,27 @@ public class CurrentFragment extends Fragment {
                     if (response.isSuccessful()) {
                         String jsonData = response.body().string();
                         try {
+                            // Get Location coordinates
+
+                            ParseQuery<ParseObject> locQuery = ParseQuery.getQuery("Location");
+                            locQuery.fromLocalDatastore();
+                            locQuery.getFirstInBackground(new GetCallback<ParseObject>() {
+                                @Override
+                                public void done(ParseObject parseObject, ParseException e) {
+                                    if( e==null){
+                                         latitudeWid = parseObject.getDouble("Latitude");
+                                         longitudeWid = parseObject.getDouble("Longitude");
+                                        try {
+                                            locationName = getLocationName(latitude,longitude);
+                                        } catch (IOException e1) {
+                                            Log.e("Location Name Searching","Failure",e);
+                                        }
+
+                                    }else{
+                                        Log.e("Location Query","Failure",e);
+                                    }
+                                }
+                            });
                             mCurrentWeather = getCurrentDetails(jsonData);
                             final Double humidity = mCurrentWeather.getHumidity()*100;
                             final int humidityLevel = humidity.intValue();
@@ -419,7 +442,8 @@ public class CurrentFragment extends Fragment {
                             cQuery.getFirstInBackground(new GetCallback<ParseObject>() {
                                 @Override
                                 public void done(ParseObject parseObject, ParseException e) {
-                                    if( e == null){                                   
+                                    if( e == null){
+                                            parseObject.put("Location",locationName);
                                             parseObject.put("Temperature",tempC);
                                             parseObject.put("AppTemperature",appTempC);
                                             parseObject.put("Summary",summary);
@@ -448,6 +472,7 @@ public class CurrentFragment extends Fragment {
 
                                         ParseObject object = new ParseObject("CurrentWeather");
                                         object.put("Temperature",tempC);
+                                        object.put("Location",locationName);
                                         object.put("AppTemperature",appTempC);
                                         object.put("Summary",summary);
                                         object.put("DewPoint",dewPoint);

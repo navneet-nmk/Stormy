@@ -1,7 +1,8 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-                android:layout_width="wrap_content"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:padding="10dp"
+                android:background="#80000000"
                 >
 
     <TextView
@@ -11,6 +12,15 @@
         android:text="Jaipur"
         android:textColor="@android:color/white"
         android:textSize="20sp"/>
+
+    <ImageView
+        android:layout_width="80dp"
+        android:layout_height="80dp"
+        android:id="@+id/weatherImageWidget"
+        android:src="@drawable/rain"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentEnd="true"/>
 
     <TextView
         android:layout_width="wrap_content"
@@ -30,6 +40,26 @@
         android:textColor="@android:color/white"
         android:layout_below="@+id/temperatureTextWidget"
         android:textSize="20sp"
+        android:layout_marginTop="5dp"/>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/apparentTempTextWidget"
+        android:text="Feels Like 25º"
+        android:textSize="20sp"
+        android:textColor="@android:color/white"
+        android:layout_below="@id/summaryTextWidget"
+        android:layout_marginTop="5dp"
+        />
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/nextHourForecastWidget"
+        android:textColor="@android:color/white"
+        android:textSize="20sp"
+        android:text="Partly Cloudy until tomorrow morning."
+        android:layout_below="@id/apparentTempTextWidget"
         android:layout_marginTop="5dp"/>
 
 </RelativeLayout>

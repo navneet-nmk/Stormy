@@ -172,7 +172,9 @@ public class HourlyFragment extends Fragment {
                             for(int i=0;i<mCurrentWeatherArray.size();i++){
                                 CurrentWeather mCW = mCurrentWeatherArray.get(i);
                                 String iconString = mCW.getIcon();
-                                String temp = Double.toString(mCW.getTemperature());
+                                Double tempF = mCW.getTemperature();
+                                int tempC = convertToC(tempF);
+                                String temp = Integer.toString(tempC);
                                 String datetime = mCW.getFormattedTime();
                                 String summary = mCW.getSummary();
                                 String humidity = Double.toString(mCW.getHumidity());

@@ -185,7 +185,9 @@ public class DailyFragment extends Fragment {
                             precipProbs =  new ArrayList<String>();
                             for(int i=0;i<mCurrentWeatherArray.size();i++){
                                 CurrentWeather mCW = mCurrentWeatherArray.get(i);
-                                String temp = Double.toString(mCW.getTemperature());
+                                Double tempF = mCW.getTemperature();
+                                int tempC = convertToC(tempF);
+                                String temp = Integer.toString(tempC);
                                 String datetime = mCW.getFormattedTime();
                                 String day = mCW.getDayOfTheWeek(mCW.getTime());
                                 String summary = mCW.getSummary();
