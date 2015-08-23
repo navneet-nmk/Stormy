@@ -71,10 +71,37 @@ public class DailyFragment extends Fragment {
         mDailyForecastText = (TextView)rootView.findViewById(R.id.dailyforecastText);
         mDailyList = (ListView)rootView.findViewById(R.id.dailyList);
 
-        if( !isNetworkAvailable()){
-            ParseQuery<ParseObject> query = new ParseQuery<ParseObject>("SummaryDaily");
-            query.fromLocalDatastore();
-            query.getFirstInBackground(new GetCallback<ParseObject>() {
+        // Get the data from the Parse Local datastore
+        ParseQuery<ParseObject> query = new ParseQuery<ParseObject>("DailyForecast");
+        query.fromLocalDatastore();
+        query.getFirstInBackground(new GetCallback<ParseObject>() {
+            @Override
+            public void done(ParseObject parseObject, ParseException e) {
+                if( e== null){
+                    temperatures = (ArrayList<String>) parseObject.get("Temperatures");
+                    summaries = (ArrayList<String>) parseObject.get("Summaries");
+                    datetimes = (ArrayList<String>) parseObject.get("DateTimes");
+                    dewPoints = (ArrayList<String>) parseObject.get("DewPoints");
+                    humidities = (ArrayList<String>) parseObject.get("Humidities");
+                    winds = (ArrayList<String>) parseObject.get("Winds");
+                    precipProbs = (ArrayList<String>) parseObject.get("PrecipProbs");
+                    pressures = (ArrayList<String>) parseObject.get("Pressures");
+                    iconList = (ArrayList<String>) parseObject.get("Icons");
+                    CustomListAdapter adapter = new CustomListAdapter(getActivity(),
+                            temperatures
+                            ,datetimes,summaries,iconList);
+                    mDailyList.setAdapter(adapter);
+                }else{
+                    Toast.makeText(getActivity(),"No data available!",
+                            Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
+
+
+            ParseQuery<ParseObject> summquery = new ParseQuery<ParseObject>("SummaryDaily");
+            summquery.fromLocalDatastore();
+            summquery.getFirstInBackground(new GetCallback<ParseObject>() {
                 @Override
                 public void done(ParseObject parseObject, ParseException e) {
                     if( e== null){
@@ -85,7 +112,7 @@ public class DailyFragment extends Fragment {
                     }
                 }
             });
-        }
+
 
 
         // Get the parse object
@@ -136,13 +163,13 @@ public class DailyFragment extends Fragment {
                 if(!temperatures.isEmpty() && !datetimes.isEmpty() && !humidities.isEmpty()
                         && !dewPoints.isEmpty() && !pressures.isEmpty()
                         && !winds.isEmpty() && !precipProbs.isEmpty()){
-                    tempD.setText("Temperature: "+temperatures.get(i)+"º");
+                    tempD.setText("Temperature: "+temperatures.get(i));
                         precipD.setText("Precip. Probability: "+precipProbs.get(i));
                     title.setText(datetimes.get(i));
                     wind.setText("Wind: "+winds.get(i));
                     humid.setText("Humidity: "+humidities.get(i) +"%");
                     pressure.setText("Pressure: "+pressures.get(i));
-                    dew.setText("Dew Point: "+ dewPoints.get(i)+"º");
+                    dew.setText("Dew Point: "+ dewPoints.get(i));
                 }
                 // Show the dialog
                 d.show();
@@ -187,7 +214,7 @@ public class DailyFragment extends Fragment {
                                 CurrentWeather mCW = mCurrentWeatherArray.get(i);
                                 Double tempF = mCW.getTemperature();
                                 int tempC = convertToC(tempF);
-                                String temp = Integer.toString(tempC);
+                                String temp = Integer.toString(tempC)+"º";
                                 String datetime = mCW.getFormattedTime();
                                 String day = mCW.getDayOfTheWeek(mCW.getTime());
                                 String summary = mCW.getSummary();
@@ -195,7 +222,7 @@ public class DailyFragment extends Fragment {
                                 String humidity = Double.toString(mCW.getHumidity()*100);
                                 Double dewPointF = mCW.getDewPoint();
                                 int dewPointC = convertToC(dewPointF);
-                                String dewPoint = Integer.toString(dewPointC);
+                                String dewPoint = Integer.toString(dewPointC)+"º";
                                 String pressure = Double.toString(mCW.getPressure());
                                 String wind = Double.toString(mCW.getWindSpeed());
                                 String precip = Double.toString(mCW.getPrecipProbability());
@@ -289,8 +316,7 @@ public class DailyFragment extends Fragment {
             });
 
         }else{
-            Toast.makeText(getActivity(),getString(R.string.network_not_available),
-                    Toast.LENGTH_SHORT).show();
+
             // Get the data from the Parse Local datastore
             ParseQuery<ParseObject> query = new ParseQuery<ParseObject>("DailyForecast");
             query.fromLocalDatastore();

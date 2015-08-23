@@ -79,6 +79,47 @@ public class HourlyFragment extends Fragment {
         mForecastText = (TextView)rootView.findViewById(R.id.forecastText);
         mHoursList = (ListView)rootView.findViewById(R.id.hourlyList);
 
+
+        ParseQuery<ParseObject> hourlyQuery = new ParseQuery<ParseObject>("HourlyForecast");
+        hourlyQuery.fromLocalDatastore();
+        hourlyQuery.getFirstInBackground(new GetCallback<ParseObject>() {
+            @Override
+            public void done(ParseObject parseObject, ParseException e) {
+                if (e == null) {
+                    // Success
+                    temperatures = (ArrayList<String>) parseObject.get("Temperatures");
+                    summaries = (ArrayList<String>) parseObject.get("Summaries");
+                    datetimes = (ArrayList<String>) parseObject.get("DateTimes");
+                    iconsList = (ArrayList<String>) parseObject.get("Icons");
+                    dewPoints = (ArrayList<String>) parseObject.get("DewPoints");
+                    humidities = (ArrayList<String>) parseObject.get("Humidities");
+                    winds = (ArrayList<String>) parseObject.get("Winds");
+                    precips = (ArrayList<String>) parseObject.get("Precips");
+                    pressures = (ArrayList<String>) parseObject.get("Pressures");
+                    CustomListAdapter adapter = new CustomListAdapter(getActivity(),
+                            temperatures, datetimes, summaries, iconsList);
+                    mHoursList.setAdapter(adapter);
+
+                } else {
+                    Log.e("Hourly Forecast object retrieval", "Failure", e);
+                    Toast.makeText(getActivity(), "No data to show!",
+                            Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
+        ParseQuery<ParseObject> sumQuery = new ParseQuery<ParseObject>("HourlySummary");
+        sumQuery.fromLocalDatastore();
+        sumQuery.getFirstInBackground(new GetCallback<ParseObject>() {
+            @Override
+            public void done(ParseObject parseObject, ParseException e) {
+                if( e == null){
+                    mForecastText.setText(parseObject.getString("Summary"));
+                }else{
+                    Log.e("Hourly Summary object retrieval","Failure",e);
+                }
+            }
+        });
+
         ParseQuery<ParseObject> locQuery = ParseQuery.getQuery("Location");
         locQuery.fromLocalDatastore();
         locQuery.getFirstInBackground(new GetCallback<ParseObject>() {
@@ -124,13 +165,13 @@ public class HourlyFragment extends Fragment {
                 if(!temperatures.isEmpty() && !datetimes.isEmpty() && !humidities.isEmpty()
                         && !dewPoints.isEmpty() && !pressures.isEmpty()
                         && !winds.isEmpty() && !precips.isEmpty()){
-                    tempD.setText("Temperature: "+temperatures.get(i)+"º");
+                    tempD.setText("Temperature: "+temperatures.get(i));
                     date.setText(datetimes.get(i));
                     precipD.setText("Precip. Probability: "+precips.get(i));
                     wind.setText("Wind: "+winds.get(i));
                     humid.setText("Humidity: "+humidities.get(i));
                     pressure.setText("Pressure: "+pressures.get(i));
-                    dew.setText("Dew Point: "+ dewPoints.get(i)+"º");
+                    dew.setText("Dew Point: "+ dewPoints.get(i));
                 }
                 // Show the dialog
                 d.show();
@@ -174,13 +215,13 @@ public class HourlyFragment extends Fragment {
                                 String iconString = mCW.getIcon();
                                 Double tempF = mCW.getTemperature();
                                 int tempC = convertToC(tempF);
-                                String temp = Integer.toString(tempC);
+                                String temp = Integer.toString(tempC)+"º";
                                 String datetime = mCW.getFormattedTime();
                                 String summary = mCW.getSummary();
                                 String humidity = Double.toString(mCW.getHumidity());
                                 Double dewPointF = mCW.getDewPoint();
                                 int dewPointC = convertToC(dewPointF);
-                                String dewPoint = Integer.toString(dewPointC);
+                                String dewPoint = Integer.toString(dewPointC)+"º";
                                 String precip = Double.toString(mCW.getPrecipProbability());
                                 String wind= Double.toString(mCW.getWindSpeed());
                                 String pressure = Double.toString(mCW.getPressure());
@@ -277,8 +318,7 @@ public class HourlyFragment extends Fragment {
             });
 
         }else{
-            Toast.makeText(getActivity(),getString(R.string.network_not_available),
-                    Toast.LENGTH_SHORT).show();
+
             ParseQuery<ParseObject> hourlyQuery = new ParseQuery<ParseObject>("HourlyForecast");
             hourlyQuery.fromLocalDatastore();
             hourlyQuery.getFirstInBackground(new GetCallback<ParseObject>() {

@@ -50,8 +50,10 @@ public class WeatherWidget extends AppWidgetProvider {
     private String summaryString = "Mostly Cloudy";
     private String appTemperature ="Feels like 26º";
     private String hourSummary = "Partly Cloudy until tomorrow morning";
+    private String iconString = "rain";
     private int iconInt = R.drawable.rain;
     private CurrentWeather mCurrentWeather;
+    private String time = "4:30pm";
 
     @Override
     public void onUpdate(final Context context,final AppWidgetManager appWidgetManager,
@@ -65,56 +67,22 @@ public class WeatherWidget extends AppWidgetProvider {
             final RemoteViews views =
                     new RemoteViews(context.getPackageName(), R.layout.weather_widget);
 
-            // Getting the parse object for weather
-            ParseQuery<ParseObject> query = ParseQuery.getQuery("CurrentWeather");
-            query.fromLocalDatastore();
-            query.getFirstInBackground(new GetCallback<ParseObject>() {
+            // Set on click listener
+            setUIElements(views,appWidgetManager,appWidgetId);
+
+            // Refresh UI every 10 minutes
+            Timer timer = new Timer();
+            TimerTask task = new TimerTask() {
                 @Override
-                public void done(ParseObject parseObject, ParseException e) {
-                    if (e == null) {
-                        Log.d("Widget", "Success");
-                        temperature = parseObject.getInt("Temperature") + "º";
-                        summaryString = parseObject.getString("Summary");
-                        locationName = parseObject.getString("Location");
-                        views.setTextViewText(R.id.locationTextWidget,locationName);
-                        views.setTextViewText(R.id.temperatureTextWidget, temperature);
-                        views.setTextViewText(R.id.summaryTextWidget, summaryString);
-                        appWidgetManager.updateAppWidget(appWidgetId, views);
-                    } else {
-                        Log.e("Widget", "Failure", e);
-
-                        CharSequence tempText = temperature;
-                        CharSequence summaryText = summaryString;
-                        CharSequence locText = locationName;
-
-                        // Construct the RemoteViews object
-                        views.setTextViewText(R.id.locationTextWidget,locText);
-                        views.setTextViewText(R.id.temperatureTextWidget, tempText);
-                        views.setTextViewText(R.id.summaryTextWidget, summaryText);
-                        appWidgetManager.updateAppWidget(appWidgetId, views);
-                    }
+                public void run() {
+                    setUIElements(views,appWidgetManager,appWidgetId);
                 }
-            });
+            };
+            timer.schedule(task,500*60*60);
 
-            // Getting the parse object for hourly summary
-            ParseQuery<ParseObject> hourlyQuery = ParseQuery.getQuery("HourlySummary");
-            hourlyQuery.fromLocalDatastore();
-            hourlyQuery.getFirstInBackground(new GetCallback<ParseObject>() {
-                @Override
-                public void done(ParseObject parseObject, ParseException e) {
-                    if( e==null){
-                        hourSummary = parseObject.getString("Summary");
-                        CharSequence hourSummaryText = hourSummary;
-                        views.setTextViewText(R.id.nextHourForecastWidget,hourSummaryText);
-                        appWidgetManager.updateAppWidget(appWidgetId, views);
-                    }else{
-                        Log.e("Widget Summary","Failure",e);
-                        CharSequence hourSummaryText = hourSummary;
-                        views.setTextViewText(R.id.nextHourForecastWidget,hourSummaryText);
-                        appWidgetManager.updateAppWidget(appWidgetId, views);
-                    }
-                }
-            });
+
+
+
 
 
 
@@ -175,16 +143,109 @@ public class WeatherWidget extends AppWidgetProvider {
         query.getFirstInBackground(new GetCallback<ParseObject>() {
             @Override
             public void done(ParseObject parseObject, ParseException e) {
-                if( e== null){
-                    Log.d("Widget","Success");
-                    temperature = parseObject.getInt("Temperature")+"º";
+                if (e == null) {
+                    Log.d("Widget", "Success");
+                    temperature = parseObject.getInt("Temperature") + "º";
                     summaryString = parseObject.getString("Summary");
                     RemoteViews views = new RemoteViews(context.getPackageName(),
                             R.layout.weather_widget);
-                    views.setTextViewText(R.id.temperatureTextWidget,temperature);
-                    views.setTextViewText(R.id.summaryTextWidget,summaryString);
+                    views.setTextViewText(R.id.temperatureTextWidget, temperature);
+                    views.setTextViewText(R.id.summaryTextWidget, summaryString);
+                } else {
+                    Log.e("Widget", "Failure", e);
+                }
+            }
+        });
+    }
+
+    // Get the appropriate icon
+    public int getImageDrawable(String icon){
+        switch (icon){
+            case "clear-day":
+                return R.drawable.sunny;
+            case "clear-night":
+                return R.drawable.clear_night;
+            case "rain":
+                return R.drawable.rain;
+            case "snow":
+                return R.drawable.snow;
+            case "sleet":
+                return R.drawable.sleet;
+            case "windy":
+                return R.drawable.windy;
+            case "cloudy":
+                return R.drawable.cloudy;
+            case "partly-cloudy-day":
+                return R.drawable.partly_cloudy_day;
+            case "partly-cloudy-night":
+                return R.drawable.partly_cloudy_night;
+            default:
+                return R.drawable.sunny;
+        }
+    }
+
+    public void setUIElements(final RemoteViews views,
+                              final AppWidgetManager appWidgetManager,final int appWidgetId){
+
+        // Getting the parse object for weather
+        ParseQuery<ParseObject> query = ParseQuery.getQuery("CurrentWeather");
+        query.fromLocalDatastore();
+        query.getFirstInBackground(new GetCallback<ParseObject>() {
+            @Override
+            public void done(ParseObject parseObject, ParseException e) {
+                if (e == null) {
+                    Log.d("Widget", "Success");
+                    temperature = parseObject.getInt("Temperature") + "º";
+                    summaryString = parseObject.getString("Summary");
+                    locationName = parseObject.getString("Location");
+                    appTemperature = "Feels like "+parseObject.getInt("AppTemperature")+"º";
+                    iconString = parseObject.getString("Icon");
+                    iconInt = getImageDrawable(iconString);
+                    time = parseObject.getString("Time");
+                    views.setTextViewText(R.id.timeTextWidget,time);
+                    views.setImageViewResource(R.id.weatherImageWidget,iconInt);
+                    views.setTextViewText(R.id.apparentTempTextWidget,appTemperature);
+                    views.setTextViewText(R.id.locationTextWidget,locationName);
+                    views.setTextViewText(R.id.temperatureTextWidget, temperature);
+                    views.setTextViewText(R.id.summaryTextWidget, summaryString);
+                    appWidgetManager.updateAppWidget(appWidgetId, views);
+                } else {
+                    Log.e("Widget", "Failure", e);
+
+                    CharSequence tempText = temperature;
+                    CharSequence summaryText = summaryString;
+                    CharSequence locText = locationName;
+                    CharSequence appText = appTemperature;
+                    CharSequence timeText = time;
+
+                    // Construct the RemoteViews object
+                    views.setTextViewText(R.id.timeTextWidget,timeText);
+                    views.setTextViewText(R.id.apparentTempTextWidget,appText);
+                    views.setTextViewText(R.id.locationTextWidget,locText);
+                    views.setTextViewText(R.id.temperatureTextWidget, tempText);
+                    views.setTextViewText(R.id.summaryTextWidget, summaryText);
+                    views.setImageViewResource(R.id.weatherImageWidget,iconInt);
+                    appWidgetManager.updateAppWidget(appWidgetId, views);
+                }
+            }
+        });
+
+        // Getting the parse object for hourly summary
+        ParseQuery<ParseObject> hourlyQuery = ParseQuery.getQuery("HourlySummary");
+        hourlyQuery.fromLocalDatastore();
+        hourlyQuery.getFirstInBackground(new GetCallback<ParseObject>() {
+            @Override
+            public void done(ParseObject parseObject, ParseException e) {
+                if( e==null){
+                    hourSummary = parseObject.getString("Summary");
+                    CharSequence hourSummaryText = hourSummary;
+                    views.setTextViewText(R.id.nextHourForecastWidget,hourSummaryText);
+                    appWidgetManager.updateAppWidget(appWidgetId, views);
                 }else{
-                    Log.e("Widget","Failure",e);
+                    Log.e("Widget Summary","Failure",e);
+                    CharSequence hourSummaryText = hourSummary;
+                    views.setTextViewText(R.id.nextHourForecastWidget,hourSummaryText);
+                    appWidgetManager.updateAppWidget(appWidgetId, views);
                 }
             }
         });

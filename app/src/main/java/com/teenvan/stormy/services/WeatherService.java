@@ -78,7 +78,7 @@ public class WeatherService extends Service {
                                 Double.toString(latitude) + "," +
                                 Double.toString(longitude);
                         Log.d(getString(R.string.forecast_api_url), forecastURL);
-
+                        setupMinutelyNetworkConnection(forecastURL);
                         // Setup a timer object
                         Timer timer = new Timer();
                         TimerTask task= new TimerTask() {
@@ -113,6 +113,7 @@ public class WeatherService extends Service {
             }
             forecastURL = forecastBaseURL + ApiKEY + "/" + Double.toString(latitude) + "," +
                     Double.toString(longitude);
+            setupMinutelyNetworkConnection(forecastURL);
             Timer timer = new Timer();
             TimerTask task =new TimerTask() {
                 @Override

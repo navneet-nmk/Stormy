@@ -71,9 +71,12 @@ public class CurrentFragment extends Fragment {
     private EditText mLocationET;
     SendLatLong mSendLatLong;
     private AdView adView;
-     String locationName = "Jaipur";
-    Double latitudeWid;
-    Double longitudeWid;
+    private String locationName = "Jaipur";
+    private Double latitudeWid;
+    private Double longitudeWid;
+    private int iconInt = R.drawable.rain;
+    private String iconString = "rain";
+    private String time = "4:30pm";
     private ArrayList<String> temperatures,summaries,datetimes;
 
 
@@ -101,7 +104,9 @@ public class CurrentFragment extends Fragment {
 
 
         // AdRequest request = new AdRequest.Builder().addTestDevice().build();
-        AdRequest request = new AdRequest.Builder().build();
+        AdRequest request = new AdRequest.Builder().
+                addTestDevice("AA967D1FB57ACA93CF35762D3CEA8762").build();
+        adView.loadAd(request);
 
 
         ParseQuery<ParseObject> cwQuery = ParseQuery.getQuery("CurrentWeather");
@@ -110,6 +115,7 @@ public class CurrentFragment extends Fragment {
             @Override
             public void done(ParseObject parseObject, ParseException e) {
                 if( e== null){
+
                     mLocation.setText(parseObject.getString("Location"));
                     mTemperature.setText(parseObject.getInt("Temperature")+"º");
                     mApparentTemperature.setText("Feels like "+
@@ -118,6 +124,31 @@ public class CurrentFragment extends Fragment {
                     mDewPoint.setText("Dew Point: "+parseObject.getDouble("DewPoint"));
                     mHumidity.setText("Humidity: "+parseObject.getDouble("Humidity")+"%");
                     mPressure.setText("Pressure: "+parseObject.getDouble("Pressure"));
+                    iconString = parseObject.getString("Icon");
+                    time = parseObject.getString("Time");
+                    mDateTime.setText(time);
+                    iconInt = getImageDrawable(iconString);
+                    mWeatherImage.setImageResource(iconInt);
+                    // Send a parse push
+
+                    ParsePush push = new ParsePush();
+                    push.setMessage(parseObject.getInt("Temperature")+"º"+"\n"+
+                            parseObject.getString("Location")+
+                            "\n"+"Feels like "+parseObject.getInt("AppTemperature")+"º"+"\n"+
+                                parseObject.getString("Summary"));
+                    push.sendInBackground(new SendCallback() {
+                        @Override
+                        public void done(ParseException e) {
+                            if( e== null){
+                                // Success sending message
+                                Log.d("Sending push","Success");
+                            }else{
+                                Log.e("Sending Push","Failure",e);
+                            }
+                        }
+                    });
+
+
                 }else{
                     Log.e("Current Weather Object Retrieval","Failure",e);
                 }
@@ -349,7 +380,7 @@ public class CurrentFragment extends Fragment {
 
                         }else{
                             Toast.makeText(getActivity(),"Please enter a valid location",
-                                    Toast.LENGTH_LONG).show();
+                                    Toast.LENGTH_SHORT).show();
                         }
                     }
                 });
@@ -375,7 +406,8 @@ public class CurrentFragment extends Fragment {
             call.enqueue(new Callback() {
                 @Override
                 public void onFailure(Request request, IOException e) {
-                    Log.e(getString(R.string.forecast_service), getString(R.string.error_string), e);
+                    Log.e(getString(R.string.forecast_service),
+                            getString(R.string.error_string), e);
                 }
 
                 @Override
@@ -423,19 +455,6 @@ public class CurrentFragment extends Fragment {
                             final int dewPointC = getTempFromF(dewPoint);
                             final String time = mCurrentWeather.getFormattedTime();
                             final String iconString = mCurrentWeather.getIcon();
-                            //Send the push notification
-                            ParsePush push = new ParsePush();
-                            push.setMessage("Temperature right now is :"+tempC);
-                            push.sendInBackground(new SendCallback() {
-                                @Override
-                                public void done(ParseException e) {
-                                    if( e== null){
-                                        Log.d("Sending the push","Success");
-                                    }else{
-                                        Log.e("Sending the push","Failure",e);
-                                    }
-                                }
-                            });
                             // Save the current weather data in parse local data store
                             ParseQuery<ParseObject> cQuery = ParseQuery.getQuery("CurrentWeather");
                             cQuery.fromLocalDatastore();
@@ -505,7 +524,8 @@ public class CurrentFragment extends Fragment {
                                     mDateTime.setText(datetime);
                                     mWeatherImage.setImageDrawable(getResources().
                                             getDrawable(getImageDrawable(iconString)));
-                                    mDewPoint.setText(Integer.toString(dewPointC)+"º");
+                                    mDewPoint.setText("Dew Point: " +
+                                            Integer.toString(dewPointC) + "º");
                                     mPressure.setText("Pressure: "+Double.toString(pressure));
                                     mHumidity.setText("Humidity: "+
                                             Integer.toString(humidityLevel) +"%");
@@ -520,13 +540,15 @@ public class CurrentFragment extends Fragment {
 
 
                     } else {
-                        Toast.makeText(getActivity(), getString(R.string.response_error), Toast.LENGTH_SHORT).show();
+                        Toast.makeText(getActivity(), getString(R.string.response_error),
+                                Toast.LENGTH_SHORT).show();
                     }
                 }
             });
 
         }else{
-            Toast.makeText(getActivity(),getString(R.string.network_not_available),Toast.LENGTH_SHORT).show();
+            Toast.makeText(getActivity(),getString(R.string.network_not_available),
+                    Toast.LENGTH_SHORT).show();
         }
     }
 

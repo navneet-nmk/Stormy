@@ -62,4 +62,15 @@
         android:layout_below="@id/apparentTempTextWidget"
         android:layout_marginTop="5dp"/>
 
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textColor="@android:color/white"
+        android:textSize="18sp"
+        android:id="@+id/timeTextWidget"
+        android:text="4:30 PM"
+        android:layout_below="@+id/locationTextWidget"
+        android:layout_alignTop="@+id/temperatureTextWidget"
+        android:layout_centerHorizontal="true"/>
+
 </RelativeLayout>
