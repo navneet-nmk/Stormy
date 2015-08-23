@@ -440,7 +440,8 @@ public class CurrentFragment extends Fragment {
                             mCurrentWeather = getCurrentDetails(jsonData);
                             final Double humidity = mCurrentWeather.getHumidity()*100;
                             final int humidityLevel = humidity.intValue();
-                            final Double dewPoint = mCurrentWeather.getDewPoint();
+                            Double dew = mCurrentWeather.getDewPoint();
+                            final int dewPoint = getTempFromF(dew);
                             final Double pressure = mCurrentWeather.getPressure();
                             final Double appTemp = mCurrentWeather.getApparentTemperature();
                             final String summary = mCurrentWeather.getSummary();
@@ -452,7 +453,7 @@ public class CurrentFragment extends Fragment {
                             Double tempD = ((temp - 32)*5)/9;
                             final int tempC = tempD.intValue();
                             final int appTempC = tempE.intValue();
-                            final int dewPointC = getTempFromF(dewPoint);
+                            final int dewPointC = getTempFromF(dew);
                             final String time = mCurrentWeather.getFormattedTime();
                             final String iconString = mCurrentWeather.getIcon();
                             // Save the current weather data in parse local data store
@@ -468,7 +469,7 @@ public class CurrentFragment extends Fragment {
                                             parseObject.put("Summary",summary);
                                             parseObject.put("DewPoint",dewPoint);
                                             parseObject.put("Pressure",pressure);
-                                            parseObject.put("Humidity",humidity);
+                                            parseObject.put("Humidity",humidityLevel);
                                             parseObject.put("Icon",iconString);
                                             parseObject.put("Time",time);
                                             // Pin in background
