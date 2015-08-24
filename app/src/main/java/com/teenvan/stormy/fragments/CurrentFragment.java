@@ -328,6 +328,8 @@ public class CurrentFragment extends Fragment {
                 Double.toString(longitude);
         Log.d(getString(R.string.forecast_api_url),forecastURL);
         Intent intent = new Intent(getActivity(), WeatherService.class);
+        intent.putExtra("Latitude",latitude);
+        intent.putExtra("Longitude",longitude);
         intent.putExtra("ForecastURL",forecastURL);
         getActivity().startService(intent);
 

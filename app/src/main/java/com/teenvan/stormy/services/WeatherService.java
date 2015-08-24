@@ -64,6 +64,11 @@ public class WeatherService extends Service {
 	@Override
 	public int onStartCommand(Intent intent, int flags, int startId) {
 		Log.d("Service", "Started");
+
+        latitude = intent.getDoubleExtra("Latitude",latitude);
+        longitude = intent.getDoubleExtra("Longitude")
+
+
         if(!isNetworkAvailable()) {
             ParseQuery<ParseObject> locQuery = ParseQuery.getQuery("Location");
             locQuery.fromLocalDatastore();

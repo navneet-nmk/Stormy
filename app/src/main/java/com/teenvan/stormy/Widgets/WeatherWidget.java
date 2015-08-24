@@ -73,6 +73,7 @@ public class WeatherWidget extends AppWidgetProvider {
 
 
 
+
             setUIElements(views,appWidgetManager,appWidgetId);
 
             // Refresh UI every 10 minutes
