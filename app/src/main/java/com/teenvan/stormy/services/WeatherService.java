@@ -65,8 +65,8 @@ public class WeatherService extends Service {
 	public int onStartCommand(Intent intent, int flags, int startId) {
 		Log.d("Service", "Started");
 
-        latitude = intent.getDoubleExtra("Latitude",latitude);
-        longitude = intent.getDoubleExtra("Longitude")
+        latitude = intent.getDoubleExtra("Latitude",37.8276);
+        longitude = intent.getDoubleExtra("Longitude",-122.423);
 
 
         if(!isNetworkAvailable()) {
