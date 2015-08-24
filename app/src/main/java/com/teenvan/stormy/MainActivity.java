@@ -9,6 +9,8 @@ import android.support.v7.app.ActionBar;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
 
+import com.google.android.gms.ads.AdRequest;
+import com.google.android.gms.ads.AdView;
 import com.teenvan.stormy.com.teenvan.stormy.adapters.SectionsPagerAdapter;
 import com.teenvan.stormy.fragments.CurrentFragment;
 import com.teenvan.stormy.fragments.DailyFragment;
@@ -16,12 +18,15 @@ import com.teenvan.stormy.fragments.HourlyFragment;
 import com.teenvan.stormy.services.WeatherService;
 
 
-public class MainActivity extends ActionBarActivity implements android.app.ActionBar.TabListener,CurrentFragment.SendLatLong {
+public class MainActivity extends ActionBarActivity implements android.app.ActionBar.TabListener,
+        CurrentFragment.SendLatLong {
     // Declaration of member variables
 
     SectionsPagerAdapter mSectionAdapter;
     Context mContext;
     ViewPager mViewPager;
+    private AdView ad;
+
 
 
     @Override
@@ -29,7 +34,12 @@ public class MainActivity extends ActionBarActivity implements android.app.Actio
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-
+        // Referencing the UI elements
+        ad = (AdView)findViewById(R.id.ad);
+        // AdRequest request = new AdRequest.Builder().addTestDevice().build();
+        AdRequest request = new AdRequest.Builder().
+                addTestDevice("AA967D1FB57ACA93CF35762D3CEA8762").build();
+        ad.loadAd(request);
 
         final ActionBar bar = getSupportActionBar();
         bar.hide();
@@ -53,17 +63,20 @@ public class MainActivity extends ActionBarActivity implements android.app.Actio
 
 
     @Override
-    public void onTabSelected(android.app.ActionBar.Tab tab, FragmentTransaction fragmentTransaction) {
+    public void onTabSelected(android.app.ActionBar.Tab tab,
+                              FragmentTransaction fragmentTransaction) {
         mViewPager.setCurrentItem(tab.getPosition());
     }
 
     @Override
-    public void onTabUnselected(android.app.ActionBar.Tab tab, FragmentTransaction fragmentTransaction) {
+    public void onTabUnselected(android.app.ActionBar.Tab tab,
+                                FragmentTransaction fragmentTransaction) {
 
     }
 
     @Override
-    public void onTabReselected(android.app.ActionBar.Tab tab, FragmentTransaction fragmentTransaction) {
+    public void onTabReselected(android.app.ActionBar.Tab tab,
+                                FragmentTransaction fragmentTransaction) {
 
     }
 

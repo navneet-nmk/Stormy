@@ -68,6 +68,11 @@ public class WeatherWidget extends AppWidgetProvider {
                     new RemoteViews(context.getPackageName(), R.layout.weather_widget);
 
             // Set on click listener
+            // Open a new activity
+
+
+
+
             setUIElements(views,appWidgetManager,appWidgetId);
 
             // Refresh UI every 10 minutes
@@ -78,11 +83,7 @@ public class WeatherWidget extends AppWidgetProvider {
                     setUIElements(views,appWidgetManager,appWidgetId);
                 }
             };
-            timer.schedule(task,500*60*60);
-
-
-
-
+            timer.scheduleAtFixedRate(task,1,10000);
 
 
 

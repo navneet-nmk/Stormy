@@ -81,13 +81,13 @@ public class WeatherService extends Service {
                         setupMinutelyNetworkConnection(forecastURL);
                         // Setup a timer object
                         Timer timer = new Timer();
-                        TimerTask task= new TimerTask() {
+                        TimerTask task = new TimerTask() {
                             @Override
                             public void run() {
                                 setupMinutelyNetworkConnection(forecastURL);
                             }
                         };
-                        timer.schedule(task,1000*60*60);
+                        timer.scheduleAtFixedRate(task, 1, 100000);
                     } else {
                         Log.e("Location HourlyFragment", "Failure", e);
                     }
@@ -115,13 +115,13 @@ public class WeatherService extends Service {
                     Double.toString(longitude);
             setupMinutelyNetworkConnection(forecastURL);
             Timer timer = new Timer();
-            TimerTask task =new TimerTask() {
+            TimerTask task = new TimerTask() {
                 @Override
                 public void run() {
                     setupMinutelyNetworkConnection(forecastURL);
                 }
             };
-            timer.schedule(task,1000*60*60);
+            timer.scheduleAtFixedRate(task,1,100000);
 
 
         }

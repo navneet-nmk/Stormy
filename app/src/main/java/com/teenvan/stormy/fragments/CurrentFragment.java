@@ -86,8 +86,6 @@ public class CurrentFragment extends Fragment {
 		View rootView = inflater.inflate(R.layout.fragment_current, container,
 				false);
 
-        // Referencing the UI elements
-        adView = (AdView)rootView.findViewById(R.id.ad);
         mLocation = (TextView)rootView.findViewById(R.id.locationText);
         mDateTime = (TextView)rootView.findViewById(R.id.datetimetext);
         mTemperature = (TextView)rootView.findViewById(R.id.temperatureText);
@@ -103,10 +101,7 @@ public class CurrentFragment extends Fragment {
         mCurrentLocImage = (ImageView)rootView.findViewById(R.id.currentLocationImage);
 
 
-        // AdRequest request = new AdRequest.Builder().addTestDevice().build();
-        AdRequest request = new AdRequest.Builder().
-                addTestDevice("AA967D1FB57ACA93CF35762D3CEA8762").build();
-        adView.loadAd(request);
+
 
 
         ParseQuery<ParseObject> cwQuery = ParseQuery.getQuery("CurrentWeather");
