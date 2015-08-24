@@ -1,5 +1,6 @@
 package com.teenvan.stormy.Widgets;
 
+import android.app.ActionBar;
 import android.content.Context;
 import android.content.Intent;
 import android.location.Address;
@@ -51,6 +52,12 @@ public class WidgetLocationActivity extends ActionBarActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_widget_location);
+
+        // Hide the actionbar
+        ActionBar bar = getActionBar();
+        if( bar != null){
+            bar.hide();
+        }
 
         // Referencing the UI elements
         mAdView = (AdView)findViewById(R.id.widgetAd);

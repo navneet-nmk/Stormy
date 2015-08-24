@@ -68,68 +68,82 @@ public class WeatherService extends Service {
         latitude = intent.getDoubleExtra("Latitude",37.8276);
         longitude = intent.getDoubleExtra("Longitude",-122.423);
 
+      if(latitude == 37.8276 && longitude == -122.423) {
+          if (!isNetworkAvailable()) {
+              ParseQuery<ParseObject> locQuery = ParseQuery.getQuery("Location");
+              locQuery.fromLocalDatastore();
+              locQuery.getFirstInBackground(new GetCallback<ParseObject>() {
+                  @Override
+                  public void done(ParseObject parseObject, ParseException e) {
+                      if (e == null) {
+                          latitude = parseObject.getDouble("Latitude");
+                          longitude = parseObject.getDouble("Longitude");
+                          // Getting the JSON data
+                          forecastURL = forecastBaseURL + ApiKEY + "/" +
+                                  Double.toString(latitude) + "," +
+                                  Double.toString(longitude);
+                          Log.d(getString(R.string.forecast_api_url), forecastURL);
+                          setupMinutelyNetworkConnection(forecastURL);
+                          // Setup a timer object
+                          Timer timer = new Timer();
+                          TimerTask task = new TimerTask() {
+                              @Override
+                              public void run() {
+                                  setupMinutelyNetworkConnection(forecastURL);
+                              }
+                          };
+                          timer.scheduleAtFixedRate(task, 1, 100000);
+                      } else {
+                          Log.e("Location HourlyFragment", "Failure", e);
+                      }
 
-        if(!isNetworkAvailable()) {
-            ParseQuery<ParseObject> locQuery = ParseQuery.getQuery("Location");
-            locQuery.fromLocalDatastore();
-            locQuery.getFirstInBackground(new GetCallback<ParseObject>() {
-                @Override
-                public void done(ParseObject parseObject, ParseException e) {
-                    if (e == null) {
-                        latitude = parseObject.getDouble("Latitude");
-                        longitude = parseObject.getDouble("Longitude");
-                        // Getting the JSON data
-                        forecastURL = forecastBaseURL + ApiKEY + "/" +
-                                Double.toString(latitude) + "," +
-                                Double.toString(longitude);
-                        Log.d(getString(R.string.forecast_api_url), forecastURL);
-                        setupMinutelyNetworkConnection(forecastURL);
-                        // Setup a timer object
-                        Timer timer = new Timer();
-                        TimerTask task = new TimerTask() {
-                            @Override
-                            public void run() {
-                                setupMinutelyNetworkConnection(forecastURL);
-                            }
-                        };
-                        timer.scheduleAtFixedRate(task, 1, 100000);
-                    } else {
-                        Log.e("Location HourlyFragment", "Failure", e);
-                    }
+                  }
+              });
+          } else {
 
-                }
-            });
-        }else{
+              LocationManager locationManager = (LocationManager) getApplicationContext().
+                      getSystemService(Context.LOCATION_SERVICE);
 
-            LocationManager locationManager = (LocationManager)getApplicationContext().
-                    getSystemService(Context.LOCATION_SERVICE);
-
-            Location location = locationManager.getLastKnownLocation
-                    (LocationManager.NETWORK_PROVIDER);
-            if(location != null){
-                latitude = location.getLatitude();
-                longitude = location.getLongitude();
-            }
-            Location gpsLocation = locationManager.getLastKnownLocation
-                    (LocationManager.GPS_PROVIDER);
-            if(location != null){
-                latitude = location.getLatitude();
-                longitude = location.getLongitude();
-            }
-            forecastURL = forecastBaseURL + ApiKEY + "/" + Double.toString(latitude) + "," +
-                    Double.toString(longitude);
-            setupMinutelyNetworkConnection(forecastURL);
-            Timer timer = new Timer();
-            TimerTask task = new TimerTask() {
-                @Override
-                public void run() {
-                    setupMinutelyNetworkConnection(forecastURL);
-                }
-            };
-            timer.scheduleAtFixedRate(task,1,100000);
+              Location location = locationManager.getLastKnownLocation
+                      (LocationManager.NETWORK_PROVIDER);
+              if (location != null) {
+                  latitude = location.getLatitude();
+                  longitude = location.getLongitude();
+              }
+              Location gpsLocation = locationManager.getLastKnownLocation
+                      (LocationManager.GPS_PROVIDER);
+              if (location != null) {
+                  latitude = location.getLatitude();
+                  longitude = location.getLongitude();
+              }
+              forecastURL = forecastBaseURL + ApiKEY + "/" + Double.toString(latitude) + "," +
+                      Double.toString(longitude);
+              setupMinutelyNetworkConnection(forecastURL);
+              Timer timer = new Timer();
+              TimerTask task = new TimerTask() {
+                  @Override
+                  public void run() {
+                      setupMinutelyNetworkConnection(forecastURL);
+                  }
+              };
+              timer.scheduleAtFixedRate(task, 1, 100000);
 
 
-        }
+          }
+
+      }else{
+          forecastURL = forecastBaseURL + ApiKEY + "/" + Double.toString(latitude)+","+
+                  Double.toString(longitude);
+          setupMinutelyNetworkConnection(forecastURL);
+          Timer timer = new Timer();
+          TimerTask task =  new TimerTask() {
+              @Override
+              public void run() {
+                  setupMinutelyNetworkConnection(forecastURL);
+              }
+          };
+          timer.scheduleAtFixedRate(task,1,100000);
+      }
 		return super.onStartCommand(intent, flags, startId);
 	}
 

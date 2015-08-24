@@ -49,6 +49,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import se.walkercrou.places.GooglePlaces;
 
@@ -158,7 +160,8 @@ public class CurrentFragment extends Fragment {
                 isProviderEnabled(LocationManager.NETWORK_PROVIDER)));
 
         if(locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
-            locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER,0,0,new LocationListener() {
+            locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER,0,0,
+                    new LocationListener() {
                 @Override
                 public void onLocationChanged(Location location) {
                     latitude = location.getLatitude();
@@ -246,32 +249,32 @@ public class CurrentFragment extends Fragment {
         locQuery.getFirstInBackground(new GetCallback<ParseObject>() {
             @Override
             public void done(ParseObject parseObject, ParseException e) {
-                if( e == null){
-                    parseObject.put("Latitude",latitude);
-                    parseObject.put("Longitude",longitude);
+                if (e == null) {
+                    parseObject.put("Latitude", latitude);
+                    parseObject.put("Longitude", longitude);
                     parseObject.pinInBackground(new SaveCallback() {
                         @Override
                         public void done(ParseException e) {
-                            if( e== null){
-                                Log.d("Location Object Updation","Success");
-                            }else{
-                                Log.e("Location Object Updation","Failure",e);
+                            if (e == null) {
+                                Log.d("Location Object Updation", "Success");
+                            } else {
+                                Log.e("Location Object Updation", "Failure", e);
                             }
                         }
                     });
-                }else{
-                    Log.e("Location Object Retrieval","Failure",e);
+                } else {
+                    Log.e("Location Object Retrieval", "Failure", e);
                     // Create a ParseObject of class Location
                     ParseObject locObject = new ParseObject("Location");
-                    locObject.put("Latitude",latitude);
-                    locObject.put("Longitude",longitude);
+                    locObject.put("Latitude", latitude);
+                    locObject.put("Longitude", longitude);
                     locObject.pinInBackground(new SaveCallback() {
                         @Override
                         public void done(ParseException e) {
-                            if( e== null){
-                                Log.d("Location Object Creation","Success");
-                            }else{
-                                Log.e("Location Object Creation","Failure",e);
+                            if (e == null) {
+                                Log.d("Location Object Creation", "Success");
+                            } else {
+                                Log.e("Location Object Creation", "Failure", e);
                             }
                         }
                     });
@@ -326,7 +329,7 @@ public class CurrentFragment extends Fragment {
         // Getting the JSON data
         forecastURL = forecastBaseURL + ApiKEY + "/" + Double.toString(latitude) + "," +
                 Double.toString(longitude);
-        Log.d(getString(R.string.forecast_api_url),forecastURL);
+        Log.d(getString(R.string.forecast_api_url), forecastURL);
         Intent intent = new Intent(getActivity(), WeatherService.class);
         intent.putExtra("Latitude",latitude);
         intent.putExtra("Longitude",longitude);
@@ -388,6 +391,16 @@ public class CurrentFragment extends Fragment {
 
         // Setting everything up
         setupNetworkConnection(forecastURL);
+
+        // Update the weather periodically
+        Timer timer = new Timer();
+        TimerTask task = new TimerTask() {
+            @Override
+            public void run() {
+                setupNetworkConnection(forecastURL);
+            }
+        };
+        timer.scheduleAtFixedRate(task,1,100000);
 
 
 		return rootView;
@@ -751,5 +764,26 @@ public class CurrentFragment extends Fragment {
         Double tempD = ((temp - 32)*5)/9;
         final int tempC = tempD.intValue();
         return tempC;
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        LocationManager locationManager = (LocationManager)getActivity().
+                getSystemService(Context.LOCATION_SERVICE);
+        Location location = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
+        if(location != null){
+            latitude = location.getLatitude();
+            longitude = location.getLongitude();
+        }
+        Location gpsLocation = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+        if(location != null){
+            latitude = location.getLatitude();
+            longitude = location.getLongitude();
+        }
+        forecastURL = forecastBaseURL + ApiKEY + "/" + Double.toString(latitude) + "," +
+                Double.toString(longitude);
+        setupNetworkConnection(forecastURL);
+        mSendLatLong.sendLatLong(latitude,longitude);
     }
 }

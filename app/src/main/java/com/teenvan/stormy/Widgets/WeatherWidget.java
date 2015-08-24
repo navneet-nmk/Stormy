@@ -76,12 +76,6 @@ public class WeatherWidget extends AppWidgetProvider {
 
             views.setOnClickPendingIntent(R.id.widget_layout,pendingIntent);
 
-            
-
-
-
-
-
             setUIElements(views,appWidgetManager,appWidgetId);
 
             // Refresh UI every 10 minutes
@@ -93,10 +87,6 @@ public class WeatherWidget extends AppWidgetProvider {
                 }
             };
             timer.scheduleAtFixedRate(task,1,10000);
-
-
-
-
 
         }
 
