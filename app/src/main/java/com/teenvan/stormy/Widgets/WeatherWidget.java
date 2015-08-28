@@ -42,6 +42,8 @@ import java.util.TimerTask;
  */
 public class WeatherWidget extends AppWidgetProvider {
     // Declaration of member variables
+    public static final String WIDGET_ID_KEY ="mywidgetproviderwidgetids";
+    public static final String WIDGET_DATA_KEY ="mywidgetproviderwidgetdata";
     private double latitude = 37.8276;
     private double longitude = -122.423;
     private String locationName = "Jaipur";
@@ -56,6 +58,21 @@ public class WeatherWidget extends AppWidgetProvider {
     private int iconInt = R.drawable.rain;
     private CurrentWeather mCurrentWeather;
     private String time = "4:30pm";
+
+
+    @Override
+    public void onReceive(Context context, Intent intent) {
+
+        if(intent.hasExtra(WIDGET_ID_KEY)){
+            int[] ids = intent.getExtras().getIntArray(WIDGET_ID_KEY);
+            if(intent.hasExtra(WIDGET_DATA_KEY)){
+                Object data = intent.getExtras().getParcelable(WIDGET_DATA_KEY);
+
+            }else{
+
+            }
+        }else  super.onReceive(context, intent);
+    }
 
     @Override
     public void onUpdate(final Context context,final AppWidgetManager appWidgetManager,
@@ -76,7 +93,7 @@ public class WeatherWidget extends AppWidgetProvider {
 
             views.setOnClickPendingIntent(R.id.widget_layout,pendingIntent);
 
-            setUIElements(views,appWidgetManager,appWidgetId);
+            setUIElements(views, appWidgetManager, appWidgetId);
 
             // Refresh UI every 10 minutes
             Timer timer = new Timer();

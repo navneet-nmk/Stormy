@@ -8,6 +8,8 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 import android.app.Service;
+import android.appwidget.AppWidgetManager;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.location.Location;
@@ -15,6 +17,7 @@ import android.location.LocationManager;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.IBinder;
+import android.os.Parcelable;
 import android.util.Log;
 
 import com.parse.GetCallback;
@@ -31,6 +34,7 @@ import com.squareup.okhttp.Request;
 import com.squareup.okhttp.Response;
 import com.teenvan.stormy.CurrentWeather;
 import com.teenvan.stormy.R;
+import com.teenvan.stormy.Widgets.WeatherWidget;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -230,6 +234,8 @@ public class WeatherService extends Service {
                             final String iconString = mCurrentWeather.getIcon();
                             final String time = mCurrentWeather.getFormattedTime();
 
+
+
                             // Create a parse object
                             ParseQuery<ParseObject> query = new
                                     ParseQuery<ParseObject>("CurrentWeather");
@@ -403,6 +409,18 @@ public class WeatherService extends Service {
         }
         return isAvailable;
     }
+
+    public static void updateMyWidgets(Context context, Parcelable data) {
+        AppWidgetManager man = AppWidgetManager.getInstance(context);
+        int[] ids = man.getAppWidgetIds(
+                new ComponentName(context, WeatherWidget.class));
+        Intent updateIntent = new Intent();
+        updateIntent.setAction(AppWidgetManager.ACTION_APPWIDGET_UPDATE);
+        updateIntent.putExtra(WeatherWidget.WIDGET_ID_KEY, ids);
+        updateIntent.putExtra(WeatherWidget.WIDGET_DATA_KEY, data);
+        context.sendBroadcast(updateIntent);
+    }
+
 
 
 }

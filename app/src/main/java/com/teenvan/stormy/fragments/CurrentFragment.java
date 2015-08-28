@@ -784,6 +784,5 @@ public class CurrentFragment extends Fragment {
         forecastURL = forecastBaseURL + ApiKEY + "/" + Double.toString(latitude) + "," +
                 Double.toString(longitude);
         setupNetworkConnection(forecastURL);
-        mSendLatLong.sendLatLong(latitude,longitude);
     }
 }
