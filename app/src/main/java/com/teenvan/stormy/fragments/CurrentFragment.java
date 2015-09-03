@@ -558,15 +558,20 @@ public class CurrentFragment extends Fragment {
 
 
                     } else {
-                        Toast.makeText(getActivity(), getString(R.string.response_error),
-                                Toast.LENGTH_SHORT).show();
+
                     }
                 }
             });
 
         }else{
-            Toast.makeText(getActivity(),getString(R.string.network_not_available),
-                    Toast.LENGTH_SHORT).show();
+            getActivity().runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    Toast.makeText(getActivity(), getString(R.string.network_not_available),
+                            Toast.LENGTH_SHORT).show();
+                }
+            });
+
         }
     }
 
