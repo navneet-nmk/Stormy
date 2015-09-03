@@ -8,9 +8,14 @@ import android.support.v4.view.ViewPager;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
+import android.util.Log;
 
 import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.AdView;
+import com.parse.ParseException;
+import com.parse.ParseInstallation;
+import com.parse.ParseUser;
+import com.parse.SaveCallback;
 import com.teenvan.stormy.com.teenvan.stormy.adapters.SectionsPagerAdapter;
 import com.teenvan.stormy.fragments.CurrentFragment;
 import com.teenvan.stormy.fragments.DailyFragment;
@@ -33,6 +38,23 @@ public class MainActivity extends ActionBarActivity implements android.app.Actio
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+
+        // Saving a Parse installation
+        ParseInstallation ints = ParseInstallation.getCurrentInstallation();
+        ints.put("User", ParseUser.getCurrentUser().getUsername());
+        ints.saveInBackground(new SaveCallback() {
+            @Override
+            public void done(ParseException e) {
+                if (e == null) {
+                    // SUCCESS
+                    Log.d("MainActivity", "Installation saved successfully");
+                } else {
+                    // FAILURE
+                    Log.e("MainActivity", "Installation saving failed", e);
+                }
+            }
+        });
 
         // Referencing the UI elements
         ad = (AdView)findViewById(R.id.ad);

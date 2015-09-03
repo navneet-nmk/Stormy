@@ -53,9 +53,10 @@ public class WidgetLocationActivity extends ActionBarActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_widget_location);
 
-        // Hide the actionbar
-        ActionBar bar = getActionBar();
-        if( bar != null){
+        // Hide the action bar
+        android.support.v7.app.ActionBar bar = getSupportActionBar();
+        if(bar != null){
+            // Hide the bar
             bar.hide();
         }
 

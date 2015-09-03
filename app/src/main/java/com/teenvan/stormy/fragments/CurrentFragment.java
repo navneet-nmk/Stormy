@@ -28,9 +28,11 @@ import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.AdView;
 import com.parse.GetCallback;
 import com.parse.ParseException;
+import com.parse.ParseInstallation;
 import com.parse.ParseObject;
 import com.parse.ParsePush;
 import com.parse.ParseQuery;
+import com.parse.ParseUser;
 import com.parse.SaveCallback;
 import com.parse.SendCallback;
 import com.squareup.okhttp.Call;
@@ -51,6 +53,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.logging.Handler;
 
 import se.walkercrou.places.GooglePlaces;
 
@@ -128,7 +131,12 @@ public class CurrentFragment extends Fragment {
                     mWeatherImage.setImageResource(iconInt);
                     // Send a parse push
 
+
+                    ParseQuery pushQuery = ParseInstallation.getQuery();
+                    pushQuery.whereEqualTo("User", ParseUser.getCurrentUser().getUsername());
+
                     ParsePush push = new ParsePush();
+                    push.setQuery(pushQuery);
                     push.setMessage(parseObject.getInt("Temperature")+"º"+"\n"+
                             parseObject.getString("Location")+
                             "\n"+"Feels like "+parseObject.getInt("AppTemperature")+"º"+"\n"+
@@ -777,12 +785,20 @@ public class CurrentFragment extends Fragment {
             longitude = location.getLongitude();
         }
         Location gpsLocation = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
-        if(location != null){
-            latitude = location.getLatitude();
-            longitude = location.getLongitude();
+        if(gpsLocation != null){
+            latitude = gpsLocation.getLatitude();
+            longitude = gpsLocation.getLongitude();
         }
-        forecastURL = forecastBaseURL + ApiKEY + "/" + Double.toString(latitude) + "," +
-                Double.toString(longitude);
-        setupNetworkConnection(forecastURL);
+        android.os.Handler handler = new android.os.Handler();
+        handler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                forecastURL = forecastBaseURL + ApiKEY + "/" + Double.toString(latitude) + "," +
+                        Double.toString(longitude);
+                setupNetworkConnection(forecastURL);
+            }
+        }, 200);
+
+
     }
 }
