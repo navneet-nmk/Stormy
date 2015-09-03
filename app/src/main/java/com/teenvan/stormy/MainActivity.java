@@ -1,6 +1,8 @@
 package com.teenvan.stormy;
 
+import android.app.AlarmManager;
 import android.app.FragmentTransaction;
+import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.support.v4.app.FragmentManager;
@@ -39,10 +41,9 @@ public class MainActivity extends ActionBarActivity implements android.app.Actio
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-
         // Saving a Parse installation
         ParseInstallation ints = ParseInstallation.getCurrentInstallation();
-        ints.put("User", ParseUser.getCurrentUser().getUsername());
+        ints.put("User",ints.getInstallationId());
         ints.saveInBackground(new SaveCallback() {
             @Override
             public void done(ParseException e) {
@@ -124,6 +125,7 @@ public class MainActivity extends ActionBarActivity implements android.app.Actio
             dailyFragment.update();
         }
     }
+
 
 
 }

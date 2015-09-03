@@ -56,11 +56,13 @@ public class WeatherService extends Service {
     private double latitude = 37.8276;
     private double longitude = -122.423;
     private String hourlySummaryString = "Clear for the day";
+    private Double lat=0.0 , longi=0.0;
 
 
 	@Override
 	public IBinder onBind(Intent intent) {
 		// TODO Auto-generated method stub
+
      	return null;
 	}
 
@@ -78,58 +80,76 @@ public class WeatherService extends Service {
 	public int onStartCommand(Intent intent, int flags, int startId) {
 		Log.d("Service", "Started");
 
-        Double lat = intent.getDoubleExtra("Latitude",0);
-        Double longi = intent.getDoubleExtra("Longitude",0);
+            if(intent!=null){
+                lat= intent.getDoubleExtra("Latitude",0.0);
+                longi= intent.getDoubleExtra("Longitude",0.0);
+                Log.d("WeatherService",lat+" "+longi);
+            }
+            if(lat==0.0 && longi == 0.0) {
+                if (!isNetworkAvailable()) {
+                    ParseQuery<ParseObject> locQuery = ParseQuery.getQuery("Location");
+                    locQuery.fromLocalDatastore();
+                    locQuery.getFirstInBackground(new GetCallback<ParseObject>() {
+                        @Override
+                        public void done(ParseObject parseObject, ParseException e) {
+                            if (e == null) {
+                                latitude = parseObject.getDouble("Latitude");
+                                longitude = parseObject.getDouble("Longitude");
+                                // Getting the JSON data
+                                forecastURL = forecastBaseURL + ApiKEY + "/" +
+                                        Double.toString(latitude) + "," +
+                                        Double.toString(longitude);
+                                Log.d(getString(R.string.forecast_api_url), forecastURL);
+                                setupMinutelyNetworkConnection(forecastURL);
+                                // Setup a timer object
+                                Timer timer = new Timer();
+                                TimerTask task = new TimerTask() {
+                                    @Override
+                                    public void run() {
+                                        setupMinutelyNetworkConnection(forecastURL);
+                                    }
+                                };
+                                timer.scheduleAtFixedRate(task, 1, 1000000);
+                            } else {
+                                Log.e("Location HourlyFragment", "Failure", e);
+                            }
 
-        if(lat==0 && longi ==0) {
-
-            if (!isNetworkAvailable()) {
-                ParseQuery<ParseObject> locQuery = ParseQuery.getQuery("Location");
-                locQuery.fromLocalDatastore();
-                locQuery.getFirstInBackground(new GetCallback<ParseObject>() {
-                    @Override
-                    public void done(ParseObject parseObject, ParseException e) {
-                        if (e == null) {
-                            latitude = parseObject.getDouble("Latitude");
-                            longitude = parseObject.getDouble("Longitude");
-                            // Getting the JSON data
-                            forecastURL = forecastBaseURL + ApiKEY + "/" +
-                                    Double.toString(latitude) + "," +
-                                    Double.toString(longitude);
-                            Log.d(getString(R.string.forecast_api_url), forecastURL);
-                            setupMinutelyNetworkConnection(forecastURL);
-                            // Setup a timer object
-                            Timer timer = new Timer();
-                            TimerTask task = new TimerTask() {
-                                @Override
-                                public void run() {
-                                    setupMinutelyNetworkConnection(forecastURL);
-                                }
-                            };
-                            timer.scheduleAtFixedRate(task, 1, 1000000);
-                        } else {
-                            Log.e("Location HourlyFragment", "Failure", e);
                         }
+                    });
+                } else {
 
+                    LocationManager locationManager = (LocationManager) getApplicationContext().
+                            getSystemService(Context.LOCATION_SERVICE);
+
+                    Location location = locationManager.getLastKnownLocation
+                            (LocationManager.NETWORK_PROVIDER);
+                    if (location != null) {
+                        latitude = location.getLatitude();
+                        longitude = location.getLongitude();
                     }
-                });
-            } else {
+                    Location gpsLocation = locationManager.getLastKnownLocation
+                            (LocationManager.GPS_PROVIDER);
+                    if (location != null) {
+                        latitude = location.getLatitude();
+                        longitude = location.getLongitude();
+                    }
+                    forecastURL = forecastBaseURL + ApiKEY + "/" + Double.toString(latitude) + "," +
+                            Double.toString(longitude);
+                    setupMinutelyNetworkConnection(forecastURL);
+                    Timer timer = new Timer();
+                    TimerTask task = new TimerTask() {
+                        @Override
+                        public void run() {
+                            setupMinutelyNetworkConnection(forecastURL);
+                        }
+                    };
+                    timer.scheduleAtFixedRate(task, 1,  5*60*1000);
 
-                LocationManager locationManager = (LocationManager) getApplicationContext().
-                        getSystemService(Context.LOCATION_SERVICE);
 
-                Location location = locationManager.getLastKnownLocation
-                        (LocationManager.NETWORK_PROVIDER);
-                if (location != null) {
-                    latitude = location.getLatitude();
-                    longitude = location.getLongitude();
                 }
-                Location gpsLocation = locationManager.getLastKnownLocation
-                        (LocationManager.GPS_PROVIDER);
-                if (location != null) {
-                    latitude = location.getLatitude();
-                    longitude = location.getLongitude();
-                }
+            }else{
+                latitude = lat;
+                longitude = longi;
                 forecastURL = forecastBaseURL + ApiKEY + "/" + Double.toString(latitude) + "," +
                         Double.toString(longitude);
                 setupMinutelyNetworkConnection(forecastURL);
@@ -140,27 +160,10 @@ public class WeatherService extends Service {
                         setupMinutelyNetworkConnection(forecastURL);
                     }
                 };
-                timer.scheduleAtFixedRate(task, 1, 1000000);
-
+                timer.scheduleAtFixedRate(task, 1, 5*60*1000);
 
             }
-        }else{
-            latitude = lat;
-            longitude = longi;
-            // We have both the latitude and longitude
-            forecastURL = forecastBaseURL + ApiKEY + "/" + Double.toString(lat)+ "," +
-                    Double.toString(longi);
-            setupMinutelyNetworkConnection(forecastURL);
-            Timer timer = new Timer();
-            TimerTask task = new TimerTask() {
-                @Override
-                public void run() {
-                        setupMinutelyNetworkConnection(forecastURL);
-                }
-            };
-            timer.scheduleAtFixedRate(task,1,1000000);
 
-        }
 
 
 		return super.onStartCommand(intent, flags, startId);
@@ -204,36 +207,7 @@ public class WeatherService extends Service {
                     if (response.isSuccessful()) {
                         String jsonData = response.body().string();
                         try {
-                            ArrayList<CurrentWeather> mCurrentWeatherArray =
-                                    getMinutelyCurrentDetails(jsonData);
-
-                            for(int i=0;i<mCurrentWeatherArray.size();i++){
-                                CurrentWeather mCW = mCurrentWeatherArray.get(i);
-                                int precipProb = mCW.getPrecipProbability();
-                                if(precipProb == 1){
-                                    String time = mCW.getFormattedTime();
-                                    ParseQuery pushQuery = ParseInstallation.getQuery();
-                                    pushQuery.whereEqualTo("User", ParseUser.getCurrentUser()
-                                                                    .getUsername());
-
-                                    ParsePush push = new ParsePush();
-                                    push.setQuery(pushQuery);
-                                    push.setMessage("Rain will come at "+time);
-                                    push.sendInBackground(new SendCallback() {
-                                        @Override
-                                        public void done(ParseException e) {
-                                            if( e== null){
-                                                Log.d("Parse Push Sent","Success");
-                                            }else{
-                                                Log.e("Parse Push Sent","Failure",e);
-                                            }
-                                        }
-                                    });
-                                    break;
-                                }
-
-
-                            }
+                           
                             // Get the current weather object
                             CurrentWeather mCurrentWeather = getCurrentDetails(jsonData);
                             mCurrentWeather = getCurrentDetails(jsonData);
@@ -295,7 +269,7 @@ public class WeatherService extends Service {
                             views.setTextViewText(R.id.temperatureTextWidget, tempC+"");
                             views.setTextViewText(R.id.summaryTextWidget, summary);
                             views.setTextViewText(R.id.nextHourForecastWidget,hourlySummaryString);
-
+                            manager.updateAppWidget(widgetIds,views);
 
                             // Create a parse object
                             ParseQuery<ParseObject> query = new
@@ -373,38 +347,7 @@ public class WeatherService extends Service {
         }
     }
 
-    public ArrayList<CurrentWeather> getMinutelyCurrentDetails(String jsonData)
-            throws JSONException {
-        // Create a JSONObject to handle the json data
 
-        JSONObject forecast = new JSONObject(jsonData);
-        String timezone = forecast.getString("timezone");
-        JSONObject hourlyForecast = forecast.getJSONObject("minutely");
-        String iconString = hourlyForecast.getString("icon");
-        final String summary = hourlyForecast.getString("summary");
-        if(hourlyForecast != null) {
-            JSONArray data = hourlyForecast.getJSONArray("data");
-            ArrayList<CurrentWeather> mArray = new ArrayList<CurrentWeather>();
-
-            for (int i = 0; i < 12; i++) {
-                JSONObject currentForecast = data.getJSONObject(i);
-                long time = currentForecast.getLong("time");
-                int precipIntensity = currentForecast.getInt("precipIntensity");
-                int precipProbability = currentForecast.getInt("precipProbability");
-
-                // Create the currentweather object
-                CurrentWeather mCurrentWeather = new CurrentWeather();
-                mCurrentWeather.setPrecipIntensity(precipIntensity);
-                mCurrentWeather.setPrecipProbability(precipProbability);
-                mArray.add(mCurrentWeather);
-            }
-            return mArray;
-        }else{
-            ArrayList<CurrentWeather> mArray = new ArrayList<>();
-            return mArray;
-        }
-
-    }
 
 
     public CurrentWeather getCurrentDetails(String jsonData) throws JSONException {

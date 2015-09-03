@@ -5,6 +5,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.location.Address;
 import android.location.Geocoder;
+import android.location.Location;
+import android.location.LocationManager;
 import android.media.Image;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
@@ -47,6 +49,7 @@ public class WidgetLocationActivity extends ActionBarActivity {
     private EditText mLocationEditText;
     private ImageView mCurrentLoc , mSearchImage;
     private AdView mAdView;
+    private Double longitude , latitude;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -86,11 +89,39 @@ public class WidgetLocationActivity extends ActionBarActivity {
                     intent.putExtra("Latitude",lat);
                     intent.putExtra("Longitude",longi);
                     startService(intent);
-                    finish();
+                    Log.d("WidgetLocation",lat+" "+longi);
                 } catch (IOException e) {
                     Log.e("Widget Location","Error",e);
                 }
 
+            }
+        });
+
+        // Getting the current location
+        mCurrentLoc.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                // Get the current location
+                LocationManager locationManager = (LocationManager)
+                        getSystemService(Context.LOCATION_SERVICE);
+                Location location = locationManager.
+                        getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
+                if(location != null){
+                    latitude = location.getLatitude();
+                    longitude = location.getLongitude();
+                }
+                Location gpsLocation = locationManager.
+                        getLastKnownLocation(LocationManager.GPS_PROVIDER);
+                if(gpsLocation != null){
+                    latitude = gpsLocation.getLatitude();
+                    longitude = gpsLocation.getLongitude();
+                }
+
+                Intent intent = new Intent(WidgetLocationActivity.this,WeatherService.class);
+                intent.putExtra("Latitude",latitude);
+                intent.putExtra("Longitude",longitude);
+                startService(intent);
+                finish();
             }
         });
 

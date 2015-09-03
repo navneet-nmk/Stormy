@@ -1,7 +1,9 @@
 package com.teenvan.stormy.fragments;
 
 import android.app.Activity;
+import android.app.AlarmManager;
 import android.app.AlertDialog;
+import android.app.PendingIntent;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -133,7 +135,8 @@ public class CurrentFragment extends Fragment {
 
 
                     ParseQuery pushQuery = ParseInstallation.getQuery();
-                    pushQuery.whereEqualTo("User", ParseUser.getCurrentUser().getUsername());
+                    pushQuery.whereEqualTo("User", ParseInstallation.getCurrentInstallation()
+                    .getInstallationId());
 
                     ParsePush push = new ParsePush();
                     push.setQuery(pushQuery);
@@ -338,11 +341,7 @@ public class CurrentFragment extends Fragment {
         forecastURL = forecastBaseURL + ApiKEY + "/" + Double.toString(latitude) + "," +
                 Double.toString(longitude);
         Log.d(getString(R.string.forecast_api_url), forecastURL);
-        Intent intent = new Intent(getActivity(), WeatherService.class);
-        intent.putExtra("Latitude",latitude);
-        intent.putExtra("Longitude",longitude);
-        intent.putExtra("ForecastURL",forecastURL);
-        getActivity().startService(intent);
+        startAlarm(getActivity(),latitude,longitude);
 
         try {
             mLocation.setText(getLocationName(latitude,longitude));
@@ -408,7 +407,7 @@ public class CurrentFragment extends Fragment {
                 setupNetworkConnection(forecastURL);
             }
         };
-        timer.scheduleAtFixedRate(task,1,100000);
+        timer.scheduleAtFixedRate(task,1, 5*60*1000);
 
 
 		return rootView;
@@ -789,16 +788,20 @@ public class CurrentFragment extends Fragment {
             latitude = gpsLocation.getLatitude();
             longitude = gpsLocation.getLongitude();
         }
-        android.os.Handler handler = new android.os.Handler();
-        handler.postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                forecastURL = forecastBaseURL + ApiKEY + "/" + Double.toString(latitude) + "," +
-                        Double.toString(longitude);
-                setupNetworkConnection(forecastURL);
-            }
-        }, 200);
+        forecastURL = forecastBaseURL + ApiKEY + "/" + Double.toString(latitude) + "," +
+                Double.toString(longitude);
+        setupNetworkConnection(forecastURL);
 
+
+    }
+
+    public void startAlarm(Context context,Double latitude,Double longitude) {
+        Intent intent = new Intent(context, WeatherService.class);
+        intent.putExtra("Latitude",latitude);
+        intent.putExtra("Longitude",longitude);
+        PendingIntent sender = PendingIntent.getService(context, 0, intent, 0);
+        AlarmManager am = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
+        am.setRepeating(AlarmManager.ELAPSED_REALTIME_WAKEUP, 5*60*1000, 10*60*1000, sender);
 
     }
 }

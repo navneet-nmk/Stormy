@@ -75,22 +75,22 @@ public class WeatherWidget extends AppWidgetProvider {
 
             // Set on click listener
             // Open a new activity
-            //Intent intent = new Intent(context,WidgetLocationActivity.class);
-            //PendingIntent pendingIntent = PendingIntent.getActivity(context,0,intent,0);
+            Intent intent = new Intent(context,WidgetLocationActivity.class);
+            PendingIntent pendingIntent = PendingIntent.getActivity(context,0,intent,0);
 
-            //views.setOnClickPendingIntent(R.id.widget_layout,pendingIntent);
+            views.setOnClickPendingIntent(R.id.widget_layout,pendingIntent);
 
-//            setUIElements(views, appWidgetManager, appWidgetId);
-//
-//            // Refresh UI every 10 minutes
-//            Timer timer = new Timer();
-//            TimerTask task = new TimerTask() {
-//                @Override
-//                public void run() {
-//                    setUIElements(views,appWidgetManager,appWidgetId);
-//                }
-//            };
-//            timer.scheduleAtFixedRate(task,1,100000);
+            setUIElements(views, appWidgetManager, appWidgetId);
+
+            // Refresh UI every 10 minutes
+            Timer timer = new Timer();
+            TimerTask task = new TimerTask() {
+                @Override
+                public void run() {
+                    setUIElements(views,appWidgetManager,appWidgetId);
+                }
+            };
+            timer.scheduleAtFixedRate(task,1, 5*60*1000);
 
         }
 
