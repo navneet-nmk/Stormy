@@ -131,8 +131,7 @@ public class DailyFragment extends Fragment {
                     setupDailyNetworkConnection(forecastURL);
                 }else{
                     Log.e("DailyFragment Location Object Retrieval","Failure",e);
-                    Toast.makeText(getActivity(),"Bummer! There was an error.Please try again.",
-                            Toast.LENGTH_SHORT).show();
+
                 }
             }
         });
@@ -309,8 +308,7 @@ public class DailyFragment extends Fragment {
 
 
                     } else {
-                        Toast.makeText(getActivity(), getString(R.string.response_error),
-                                Toast.LENGTH_SHORT).show();
+
                     }
                 }
             });

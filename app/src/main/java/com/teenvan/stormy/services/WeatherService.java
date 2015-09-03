@@ -109,7 +109,7 @@ public class WeatherService extends Service {
                                         setupMinutelyNetworkConnection(forecastURL);
                                     }
                                 };
-                                timer.scheduleAtFixedRate(task, 1, 1000000);
+                                timer.scheduleAtFixedRate(task, 10*60*1000, 20*60*1000);
                             } else {
                                 Log.e("Location HourlyFragment", "Failure", e);
                             }
@@ -143,7 +143,8 @@ public class WeatherService extends Service {
                             setupMinutelyNetworkConnection(forecastURL);
                         }
                     };
-                    timer.scheduleAtFixedRate(task, 1,  5*60*1000);
+                    timer.scheduleAtFixedRate(task, 10*60*1000,  20*60*1000);
+
 
 
                 }
@@ -160,7 +161,7 @@ public class WeatherService extends Service {
                         setupMinutelyNetworkConnection(forecastURL);
                     }
                 };
-                timer.scheduleAtFixedRate(task, 1, 5*60*1000);
+                timer.scheduleAtFixedRate(task, 10*60*1000, 20*60*1000);
 
             }
 
@@ -207,7 +208,7 @@ public class WeatherService extends Service {
                     if (response.isSuccessful()) {
                         String jsonData = response.body().string();
                         try {
-                           
+
                             // Get the current weather object
                             CurrentWeather mCurrentWeather = getCurrentDetails(jsonData);
                             mCurrentWeather = getCurrentDetails(jsonData);
@@ -264,9 +265,9 @@ public class WeatherService extends Service {
                                     WeatherService.this.getPackageName(),R.layout.weather_widget);
                             views.setTextViewText(R.id.timeTextWidget,time);
                             views.setImageViewResource(R.id.weatherImageWidget, iconInt);
-                            views.setTextViewText(R.id.apparentTempTextWidget, appTempC + "");
+                            views.setTextViewText(R.id.apparentTempTextWidget, appTempC + "º");
                             views.setTextViewText(R.id.locationTextWidget,locationName);
-                            views.setTextViewText(R.id.temperatureTextWidget, tempC+"");
+                            views.setTextViewText(R.id.temperatureTextWidget, tempC+"º");
                             views.setTextViewText(R.id.summaryTextWidget, summary);
                             views.setTextViewText(R.id.nextHourForecastWidget,hourlySummaryString);
                             manager.updateAppWidget(widgetIds,views);

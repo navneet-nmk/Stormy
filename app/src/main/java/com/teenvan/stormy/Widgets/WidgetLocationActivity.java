@@ -10,6 +10,7 @@ import android.location.LocationManager;
 import android.media.Image;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.os.Handler;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -87,11 +88,21 @@ public class WidgetLocationActivity extends ActionBarActivity {
                     // Send this data to the service
                     Intent intent = new Intent(WidgetLocationActivity.this, WeatherService.class);
                     intent.putExtra("Latitude",lat);
-                    intent.putExtra("Longitude",longi);
+                    intent.putExtra("Longitude", longi);
                     startService(intent);
-                    Log.d("WidgetLocation",lat+" "+longi);
+                    Log.d("WidgetLocation", lat + " " + longi);
+                    Handler handler = new Handler();
+                    handler.postDelayed(new Runnable() {
+                        @Override
+                        public void run() {
+                            finish();
+                        }
+                    },200);
                 } catch (IOException e) {
                     Log.e("Widget Location","Error",e);
+                    Toast.makeText(WidgetLocationActivity.this, "Error finding location",
+                            Toast.LENGTH_SHORT).show();
+                    finish();
                 }
 
             }
@@ -119,9 +130,15 @@ public class WidgetLocationActivity extends ActionBarActivity {
 
                 Intent intent = new Intent(WidgetLocationActivity.this,WeatherService.class);
                 intent.putExtra("Latitude",latitude);
-                intent.putExtra("Longitude",longitude);
+                intent.putExtra("Longitude", longitude);
                 startService(intent);
-                finish();
+                Handler handler = new Handler();
+                handler.postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        finish();
+                    }
+                },200);
             }
         });
 

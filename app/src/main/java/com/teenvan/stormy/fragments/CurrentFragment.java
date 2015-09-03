@@ -407,7 +407,7 @@ public class CurrentFragment extends Fragment {
                 setupNetworkConnection(forecastURL);
             }
         };
-        timer.scheduleAtFixedRate(task,1, 5*60*1000);
+        timer.scheduleAtFixedRate(task,1, 10*60*1000);
 
 
 		return rootView;
@@ -686,16 +686,19 @@ public class CurrentFragment extends Fragment {
     private String getLocationName(Double latitude,Double longitude) throws IOException {
         // Getting the city name
 
-        Geocoder geocoder = new Geocoder(getActivity(), Locale.getDefault());
-        List<Address> addresses = null;
+        if(isNetworkAvailable()) {
+            Geocoder geocoder = new Geocoder(getActivity(), Locale.getDefault());
+            List<Address> addresses = null;
 
             addresses = geocoder.getFromLocation(latitude, longitude, 1);
             String cityName = addresses.get(0).getAddressLine(0);
             String stateName = addresses.get(0).getAddressLine(1);
             String countryName = addresses.get(0).getAddressLine(2);
-            Log.d("Location Name",cityName);
-        return cityName;
-
+            Log.d("Location Name", cityName);
+            return cityName;
+        }else{
+            return "Jaipur";
+        }
     }
 
     private String getLocationFromQuery(String query) throws IOException {
