@@ -71,8 +71,8 @@ public class CurrentFragment extends Fragment {
 
     private String ApiKEY = "cc360eb63a145e1a3956ebc14e34a247";
     private String forecastBaseURL = "https://api.forecast.io/forecast/";
-    private double latitude = 37.8276;
-    private double longitude = -122.423;
+    private double latitude = 0;
+    private double longitude = 0;
     private String forecastURL ;
     private CurrentWeather mCurrentWeather;
     private String googleApiKey = "AIzaSyDAm2MBA09M2bLATgj2rvLP8bj68-y7cwc";
@@ -276,9 +276,9 @@ public class CurrentFragment extends Fragment {
             longitude = location.getLongitude();
         }
         Location gpsLocation = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
-        if(location != null){
-            latitude = location.getLatitude();
-            longitude = location.getLongitude();
+        if(gpsLocation != null){
+            latitude = gpsLocation.getLatitude();
+            longitude = gpsLocation.getLongitude();
         }
 
         // Save the location coordinates in a ParseObject on the local data store
@@ -324,8 +324,12 @@ public class CurrentFragment extends Fragment {
             @Override
             public void onClick(View view) {
                 if (isNetworkAvailable()) {
-                    setupNetworkConnection(forecastURL);
-                    mSendLatLong.updateData();
+                    if (latitude == 0 && longitude == 0) {
+                        // Turn on the location settings
+                    } else {
+                        setupNetworkConnection(forecastURL);
+                        mSendLatLong.updateData();
+                    }
                 }
             }
         });
@@ -344,9 +348,9 @@ public class CurrentFragment extends Fragment {
                 }
                 Location gpsLocation = locationManager.
                         getLastKnownLocation(LocationManager.GPS_PROVIDER);
-                if(location != null){
-                    latitude = location.getLatitude();
-                    longitude = location.getLongitude();
+                if(gpsLocation != null){
+                    latitude = gpsLocation.getLatitude();
+                    longitude = gpsLocation.getLongitude();
                 }
                 try {
                     String cityName = getLocationName(latitude,longitude);
@@ -355,21 +359,28 @@ public class CurrentFragment extends Fragment {
                 } catch (IOException e) {
                     Log.e("IOException","Failure getting location name",e);
                 }
-                forecastURL = forecastBaseURL + ApiKEY + "/" + Double.toString(latitude) + "," +
-                        Double.toString(longitude);
-                setupNetworkConnection(forecastURL);
-                mSendLatLong.sendLatLong(latitude,longitude);
+                if(latitude ==0 && longitude==0){
 
+                }else {
+                    forecastURL = forecastBaseURL + ApiKEY + "/" + Double.toString(latitude) + "," +
+                            Double.toString(longitude);
+                    setupNetworkConnection(forecastURL);
+                    mSendLatLong.sendLatLong(latitude, longitude);
+                }
             }
         });
 
 
         // Getting the JSON data
-        forecastURL = forecastBaseURL + ApiKEY + "/" + Double.toString(latitude) + "," +
-                Double.toString(longitude);
-        Log.d(getString(R.string.forecast_api_url), forecastURL);
-        startAlarm(getActivity(),latitude,longitude);
-
+        if(latitude == 0 && longitude == 0) {
+            // Turn On Location settings
+            Toast.makeText(getActivity(),"Enable Location Settings",Toast.LENGTH_SHORT).show();
+        }else {
+            forecastURL = forecastBaseURL + ApiKEY + "/" + Double.toString(latitude) + "," +
+                    Double.toString(longitude);
+            Log.d(getString(R.string.forecast_api_url), forecastURL);
+            startAlarm(getActivity(), latitude, longitude);
+        }
         try {
             mLocation.setText(getLocationName(latitude,longitude));
         } catch (IOException e) {
@@ -424,17 +435,21 @@ public class CurrentFragment extends Fragment {
 
 
         // Setting everything up
-        setupNetworkConnection(forecastURL);
+        if(latitude == 0 && longitude ==0){
 
-        // Update the weather periodically
-        Timer timer = new Timer();
-        TimerTask task = new TimerTask() {
-            @Override
-            public void run() {
-                setupNetworkConnection(forecastURL);
-            }
-        };
-        timer.scheduleAtFixedRate(task,1, 10*60*1000);
+        }else {
+            setupNetworkConnection(forecastURL);
+            // Update the weather periodically
+            Timer timer = new Timer();
+            TimerTask task = new TimerTask() {
+                @Override
+                public void run() {
+                    setupNetworkConnection(forecastURL);
+                }
+            };
+            timer.scheduleAtFixedRate(task, 1, 40 * 60 * 1000);
+        }
+
 
 
 		return rootView;

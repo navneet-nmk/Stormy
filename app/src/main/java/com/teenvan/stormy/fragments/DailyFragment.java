@@ -54,8 +54,8 @@ public class DailyFragment extends Fragment {
     private ListView mDailyList;
     private String ApiKEY = "cc360eb63a145e1a3956ebc14e34a247";
     private String forecastBaseURL = "https://api.forecast.io/forecast/";
-    private double latitude = 37.8276;
-    private double longitude = -122.423;
+    private double latitude = 0;
+    private double longitude = 0;
     private String forecastURL;
     private ArrayList<String> temperatures,summaries,datetimes,iconList,
             precipProbs,dewPoints,pressures,humidities,winds;
