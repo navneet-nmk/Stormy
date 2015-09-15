@@ -8,6 +8,8 @@
                 android:paddingLeft="10dp"
                 android:paddingTop="10dp"
                 android:background="#011f4b"
+                android:clickable="true"
+                android:focusableInTouchMode="true"
                 tools:context="com.navneet.photochat.MainActivity$PlaceholderFragment">
 
     <TextView

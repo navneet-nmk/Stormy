@@ -7,6 +7,7 @@ import android.app.PendingIntent;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.graphics.Typeface;
 import android.location.Address;
 import android.location.Geocoder;
 import android.location.Location;
@@ -21,6 +22,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -93,6 +95,10 @@ public class CurrentFragment extends Fragment {
 		View rootView = inflater.inflate(R.layout.fragment_current, container,
 				false);
 
+
+        Typeface font = Typeface.createFromAsset(getActivity().getAssets(),
+                "fonts/Quicksand-Light.otf");
+
         mLocation = (TextView)rootView.findViewById(R.id.locationText);
         mDateTime = (TextView)rootView.findViewById(R.id.datetimetext);
         mTemperature = (TextView)rootView.findViewById(R.id.temperatureText);
@@ -107,8 +113,29 @@ public class CurrentFragment extends Fragment {
         mRefreshImage = (ImageView)rootView.findViewById(R.id.refreshImageView);
         mCurrentLocImage = (ImageView)rootView.findViewById(R.id.currentLocationImage);
 
+        mLocation.setTypeface(font);
+        mDateTime.setTypeface(font);
+        mTemperature.setTypeface(font);
+        mApparentTemperature.setTypeface(font);
+        mSummary.setTypeface(font);
+        mDewPoint.setTypeface(font);
+        mHumidity.setTypeface(font);
+        mPressure.setTypeface(font);
+        mLocationET.setTypeface(font);
 
 
+        // Set on focus change listener
+        mLocationET.setOnFocusChangeListener(new View.OnFocusChangeListener() {
+            @Override
+            public void onFocusChange(View v, boolean hasFocus) {
+                if(!hasFocus){
+                    hideKeyboard(v);
+                    mLocationET.setVisibility(View.INVISIBLE);
+                    mLocation.setVisibility(View.VISIBLE);
+                    mSearchImage.setVisibility(View.INVISIBLE);
+                }
+            }
+        });
 
 
         ParseQuery<ParseObject> cwQuery = ParseQuery.getQuery("CurrentWeather");
@@ -809,7 +836,13 @@ public class CurrentFragment extends Fragment {
         intent.putExtra("Longitude",longitude);
         PendingIntent sender = PendingIntent.getService(context, 0, intent, 0);
         AlarmManager am = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
-        am.setRepeating(AlarmManager.ELAPSED_REALTIME_WAKEUP, 5*60*1000, 10*60*1000, sender);
+        am.setRepeating(AlarmManager.ELAPSED_REALTIME_WAKEUP, 5 * 60 * 1000, 10 * 60 * 1000, sender);
 
+    }
+
+    public void hideKeyboard(View view) {
+        InputMethodManager inputMethodManager =(InputMethodManager)getActivity().
+                getSystemService(Activity.INPUT_METHOD_SERVICE);
+        inputMethodManager.hideSoftInputFromWindow(view.getWindowToken(), 0);
     }
 }

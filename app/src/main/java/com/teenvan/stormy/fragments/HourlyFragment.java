@@ -75,9 +75,16 @@ public class HourlyFragment extends Fragment {
 			Bundle savedInstanceState) {
 		View rootView = inflater.inflate(R.layout.fragment_heart_rate,
 				container, false);
+
+        // Setting the typeface
+        final Typeface font = Typeface.createFromAsset(getActivity().getAssets(),
+                "fonts/Quicksand-Light.otf");
+
         // Referencing the UI elements
         mForecastText = (TextView)rootView.findViewById(R.id.forecastText);
         mHoursList = (ListView)rootView.findViewById(R.id.hourlyList);
+
+        mForecastText.setTypeface(font);
 
 
         ParseQuery<ParseObject> hourlyQuery = new ParseQuery<ParseObject>("HourlyForecast");
@@ -154,6 +161,16 @@ public class HourlyFragment extends Fragment {
                 TextView pressure = (TextView)d.findViewById(R.id.pressureDText);
                 TextView dew = (TextView)d.findViewById(R.id.dewPointDtext);
                 TextView ok = (TextView)d.findViewById(R.id.okText);
+
+                date.setTypeface(font);
+                tempD.setTypeface(font);
+                precipD.setTypeface(font);
+                wind.setTypeface(font);
+                humid.setTypeface(font);
+                pressure.setTypeface(font);
+                dew.setTypeface(font);
+                ok.setTypeface(font);
+
                 ok.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View view) {

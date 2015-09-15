@@ -67,9 +67,16 @@ public class DailyFragment extends Fragment {
 		View rootView = inflater.inflate(R.layout.fragment_activity, container,
 				false);
 
+        // Typeface setting
+
+        final Typeface font = Typeface.createFromAsset(getActivity().getAssets(),
+                "fonts/Quicksand-Light.otf");
+
         //Referencing the UI elements
         mDailyForecastText = (TextView)rootView.findViewById(R.id.dailyforecastText);
         mDailyList = (ListView)rootView.findViewById(R.id.dailyList);
+
+        mDailyForecastText.setTypeface(font);
 
         // Get the data from the Parse Local datastore
         ParseQuery<ParseObject> query = new ParseQuery<ParseObject>("DailyForecast");
@@ -130,7 +137,7 @@ public class DailyFragment extends Fragment {
                     Log.d(getString(R.string.forecast_api_url),forecastURL);
                     setupDailyNetworkConnection(forecastURL);
                 }else{
-                    Log.e("DailyFragment Location Object Retrieval","Failure",e);
+                    Log.e("DailyFragment Location Object Retrieval", "Failure", e);
 
                 }
             }
@@ -151,6 +158,16 @@ public class DailyFragment extends Fragment {
                 TextView pressure = (TextView)d.findViewById(R.id.pressureDText);
                 TextView dew = (TextView)d.findViewById(R.id.dewPointDtext);
                 TextView ok = (TextView)d.findViewById(R.id.okText);
+
+                title.setTypeface(font);
+                tempD.setTypeface(font);
+                precipD.setTypeface(font);
+                wind.setTypeface(font);
+                humid.setTypeface(font);
+                pressure.setTypeface(font);
+                dew.setTypeface(font);
+                ok.setTypeface(font);
+
                 ok.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View view) {

@@ -11,6 +11,7 @@
         android:layout_height="wrap_content"
         android:id="@+id/locationTextWidget"
         android:text="Jaipur"
+        android:fontFamily="sans-serif-light"
         android:textColor="@android:color/white"
         android:textSize="20sp"/>
 
@@ -29,6 +30,7 @@
         android:id="@+id/temperatureTextWidget"
         android:layout_below="@+id/locationTextWidget"
         android:text="26º"
+        android:fontFamily="sans-serif-light"
         android:textColor="@android:color/white"
         android:textSize="35sp"
         android:layout_marginTop="5dp"/>
@@ -38,6 +40,7 @@
         android:layout_height="wrap_content"
         android:id="@+id/summaryTextWidget"
         android:text="Mostly Cloudy"
+        android:fontFamily="sans-serif-light"
         android:textColor="@android:color/white"
         android:layout_below="@+id/temperatureTextWidget"
         android:textSize="20sp"
@@ -49,6 +52,7 @@
         android:id="@+id/apparentTempTextWidget"
         android:text="Feels Like 25º"
         android:textSize="20sp"
+        android:fontFamily="sans-serif-light"
         android:textColor="@android:color/white"
         android:layout_below="@id/summaryTextWidget"
         android:layout_marginTop="5dp"
@@ -59,6 +63,7 @@
         android:id="@+id/nextHourForecastWidget"
         android:textColor="@android:color/white"
         android:textSize="20sp"
+        android:fontFamily="sans-serif-light"
         android:text="Partly Cloudy until tomorrow morning."
         android:layout_below="@id/apparentTempTextWidget"
         android:layout_marginTop="5dp"/>
@@ -70,6 +75,7 @@
         android:textSize="18sp"
         android:id="@+id/timeTextWidget"
         android:text="4:30 PM"
+        android:fontFamily="sans-serif-light"
         android:layout_below="@+id/locationTextWidget"
         android:layout_alignTop="@+id/temperatureTextWidget"
         android:layout_centerHorizontal="true"/>

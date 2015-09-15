@@ -53,8 +53,8 @@ public class WeatherService extends Service {
 	private String forecastURL = "";
     private String ApiKEY = "cc360eb63a145e1a3956ebc14e34a247";
     private String forecastBaseURL = "https://api.forecast.io/forecast/";
-    private double latitude = 37.8276;
-    private double longitude = -122.423;
+    private double latitude;
+    private double longitude;
     private String hourlySummaryString = "Clear for the day";
     private Double lat=0.0 , longi=0.0;
 
@@ -109,7 +109,7 @@ public class WeatherService extends Service {
                                         setupMinutelyNetworkConnection(forecastURL);
                                     }
                                 };
-                                timer.scheduleAtFixedRate(task, 10*60*1000, 20*60*1000);
+                                timer.scheduleAtFixedRate(task, 30*60*1000, 40*60*1000);
                             } else {
                                 Log.e("Location HourlyFragment", "Failure", e);
                             }
@@ -129,9 +129,9 @@ public class WeatherService extends Service {
                     }
                     Location gpsLocation = locationManager.getLastKnownLocation
                             (LocationManager.GPS_PROVIDER);
-                    if (location != null) {
-                        latitude = location.getLatitude();
-                        longitude = location.getLongitude();
+                    if (gpsLocation != null) {
+                        latitude = gpsLocation.getLatitude();
+                        longitude = gpsLocation.getLongitude();
                     }
                     forecastURL = forecastBaseURL + ApiKEY + "/" + Double.toString(latitude) + "," +
                             Double.toString(longitude);
@@ -143,7 +143,7 @@ public class WeatherService extends Service {
                             setupMinutelyNetworkConnection(forecastURL);
                         }
                     };
-                    timer.scheduleAtFixedRate(task, 10*60*1000,  20*60*1000);
+                    timer.scheduleAtFixedRate(task, 30*60*1000,  40*60*1000);
 
 
 
@@ -161,7 +161,7 @@ public class WeatherService extends Service {
                         setupMinutelyNetworkConnection(forecastURL);
                     }
                 };
-                timer.scheduleAtFixedRate(task, 10*60*1000, 20*60*1000);
+                timer.scheduleAtFixedRate(task, 30*60*1000, 40*60*1000);
 
             }
 
@@ -176,19 +176,7 @@ public class WeatherService extends Service {
 		super.onDestroy();
 	}
 
-	private String getCurrentDate() {
-		SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
-		Calendar cal = Calendar.getInstance();
-		String date = sdf.format(cal.getTime());
-		return date;
-	}
 
-	private int getCurrentHour() {
-		Calendar cal = Calendar.getInstance();
-		int hours = cal.getTime().getHours();
-		Log.d("Current Hours", Integer.toString(hours));
-		return hours;
-	}
 
     public void setupMinutelyNetworkConnection(String forecastURL){
         if(isNetworkAvailable()) {

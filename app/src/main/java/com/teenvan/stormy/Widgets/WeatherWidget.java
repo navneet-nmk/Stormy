@@ -26,6 +26,7 @@ import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.Request;
 import com.squareup.okhttp.Response;
 import com.teenvan.stormy.CurrentWeather;
+import com.teenvan.stormy.MainActivity;
 import com.teenvan.stormy.R;
 
 import org.json.JSONException;
@@ -75,12 +76,13 @@ public class WeatherWidget extends AppWidgetProvider {
 
             // Set on click listener
             // Open a new activity
-            Intent intent = new Intent(context,WidgetLocationActivity.class);
+            Intent intent = new Intent(context,MainActivity.class);
             PendingIntent pendingIntent = PendingIntent.getActivity(context,0,intent,0);
 
-           // views.setOnClickPendingIntent(R.id.widget_layout,pendingIntent);
+           views.setOnClickPendingIntent(R.id.widget_layout,pendingIntent);
 
-           setUIElements(views, appWidgetManager, appWidgetId);
+
+            setUIElements(views, appWidgetManager, appWidgetId);
 //
 //            // Refresh UI every 10 minutes
 //            Timer timer = new Timer();
@@ -107,22 +109,7 @@ public class WeatherWidget extends AppWidgetProvider {
         // Enter relevant functionality for when the last widget is disabled
     }
     // Get the location data
-    public String getLocation(Context context) throws IOException {
-        LocationManager locationManager = (LocationManager)context.
-                getSystemService(Context.LOCATION_SERVICE);
-        Location location = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
-        if(location != null){
-            latitude = location.getLatitude();
-            longitude = location.getLongitude();
-        }
-        Location gpsLocation = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
-        if(location != null){
-            latitude = location.getLatitude();
-            longitude = location.getLongitude();
-        }
 
-        return  getLocationName(context,latitude,longitude);
-    }
     // Get the location Name
     private String getLocationName(Context context,
                                    Double latitude,Double longitude) throws IOException {
@@ -140,27 +127,7 @@ public class WeatherWidget extends AppWidgetProvider {
 
     }
 
-    public void getWeatherDetails(final Context context){
-        // Getting the parse object
-        ParseQuery<ParseObject> query = ParseQuery.getQuery("CurrentWeather");
-        query.fromLocalDatastore();
-        query.getFirstInBackground(new GetCallback<ParseObject>() {
-            @Override
-            public void done(ParseObject parseObject, ParseException e) {
-                if (e == null) {
-                    Log.d("Widget", "Success");
-                    temperature = parseObject.getInt("Temperature") + "º";
-                    summaryString = parseObject.getString("Summary");
-                    RemoteViews views = new RemoteViews(context.getPackageName(),
-                            R.layout.weather_widget);
-                    views.setTextViewText(R.id.temperatureTextWidget, temperature);
-                    views.setTextViewText(R.id.summaryTextWidget, summaryString);
-                } else {
-                    Log.e("Widget", "Failure", e);
-                }
-            }
-        });
-    }
+
 
     // Get the appropriate icon
     public int getImageDrawable(String icon){

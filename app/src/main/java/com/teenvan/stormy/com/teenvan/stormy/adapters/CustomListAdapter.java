@@ -72,10 +72,16 @@ public class CustomListAdapter extends ArrayAdapter<String> {
 			holder = (ViewHolder) convertView.getTag();
 
 		}
+        Typeface font = Typeface.createFromAsset(context.getAssets(),
+                "fonts/Quicksand-Light.otf");
 		// Set text value
 		holder.txtTitle.setText(temp.get(position));
         holder.summary.setText(summaryList.get(position));
         holder.datetime.setText(datetimeList.get(position));
+
+        holder.txtTitle.setTypeface(font);
+        holder.summary.setTypeface(font);
+        holder.datetime.setTypeface(font);
 
 
         if(iconsList.get(position).equals("clear-day")){
