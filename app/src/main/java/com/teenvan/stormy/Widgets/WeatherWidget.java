@@ -45,19 +45,16 @@ public class WeatherWidget extends AppWidgetProvider {
     // Declaration of member variables
     public static final String WIDGET_ID_KEY ="mywidgetproviderwidgetids";
     public static final String WIDGET_DATA_KEY ="mywidgetproviderwidgetdata";
-    private double latitude = 37.8276;
-    private double longitude = -122.423;
+
     private String locationName = "Jaipur";
-    private String forecastURL ;
-    private String ApiKEY = "cc360eb63a145e1a3956ebc14e34a247";
-    private String forecastBaseURL = "https://api.forecast.io/forecast/";
+
     private String temperature = "28º";
     private String summaryString = "Mostly Cloudy";
     private String appTemperature ="Feels like 26º";
     private String hourSummary = "Partly Cloudy until tomorrow morning";
     private String iconString = "rain";
     private int iconInt = R.drawable.rain;
-    private CurrentWeather mCurrentWeather;
+
     private String time = "4:30pm";
 
 
@@ -83,16 +80,7 @@ public class WeatherWidget extends AppWidgetProvider {
 
 
             setUIElements(views, appWidgetManager, appWidgetId);
-//
-//            // Refresh UI every 10 minutes
-//            Timer timer = new Timer();
-//            TimerTask task = new TimerTask() {
-//                @Override
-//                public void run() {
-//                    setUIElements(views,appWidgetManager,appWidgetId);
-//                }
-//            };
-//            timer.scheduleAtFixedRate(task,1, 5*60*1000);
+
 
         }
 
@@ -110,22 +98,7 @@ public class WeatherWidget extends AppWidgetProvider {
     }
     // Get the location data
 
-    // Get the location Name
-    private String getLocationName(Context context,
-                                   Double latitude,Double longitude) throws IOException {
-        // Getting the city name
 
-        Geocoder geocoder = new Geocoder(context, Locale.getDefault());
-        List<Address> addresses = null;
-
-        addresses = geocoder.getFromLocation(latitude, longitude, 1);
-        String cityName = addresses.get(0).getAddressLine(0);
-        String stateName = addresses.get(0).getAddressLine(1);
-        String countryName = addresses.get(0).getAddressLine(2);
-        Log.d("Location Name",cityName);
-        return cityName;
-
-    }
 
 
 

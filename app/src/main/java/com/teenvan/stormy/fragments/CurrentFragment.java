@@ -274,11 +274,21 @@ public class CurrentFragment extends Fragment {
         if(location != null){
             latitude = location.getLatitude();
             longitude = location.getLongitude();
+            try {
+                mLocation.setText(getLocationName(latitude, longitude));
+            } catch (IOException e) {
+                Log.e("Location Error", "Error", e);
+            }
         }
         Location gpsLocation = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
         if(gpsLocation != null){
             latitude = gpsLocation.getLatitude();
             longitude = gpsLocation.getLongitude();
+            try {
+                mLocation.setText(getLocationName(latitude, longitude));
+            } catch (IOException e) {
+                Log.e("Location Error", "Error", e);
+            }
         }
 
         // Save the location coordinates in a ParseObject on the local data store
@@ -338,30 +348,69 @@ public class CurrentFragment extends Fragment {
             @Override
             public void onClick(View view) {
                 // Get the current location
-                LocationManager locationManager = (LocationManager)getActivity().
+                LocationManager locationManager = (LocationManager) getActivity().
                         getSystemService(Context.LOCATION_SERVICE);
                 Location location = locationManager.
                         getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
-                if(location != null){
+                if (location != null) {
                     latitude = location.getLatitude();
                     longitude = location.getLongitude();
                 }
                 Location gpsLocation = locationManager.
                         getLastKnownLocation(LocationManager.GPS_PROVIDER);
-                if(gpsLocation != null){
+                if (gpsLocation != null) {
                     latitude = gpsLocation.getLatitude();
                     longitude = gpsLocation.getLongitude();
                 }
                 try {
-                    String cityName = getLocationName(latitude,longitude);
+                    String cityName = getLocationName(latitude, longitude);
                     mLocation.setText(cityName);
 
                 } catch (IOException e) {
-                    Log.e("IOException","Failure getting location name",e);
+                    Log.e("IOException", "Failure getting location name", e);
                 }
-                if(latitude ==0 && longitude==0){
+                if (latitude == 0 && longitude == 0) {
 
-                }else {
+                } else {
+                    // Save in background
+                    ParseQuery<ParseObject> query = ParseQuery.getQuery("Location");
+                    query.fromLocalDatastore();
+                    query.getFirstInBackground(new GetCallback<ParseObject>() {
+                        @Override
+                        public void done(ParseObject parseObject, ParseException e) {
+                            if(e==null){
+                                // Success finding the object
+                                parseObject.put("Latitude",latitude);
+                                parseObject.put("Longitude",longitude);
+                                parseObject.pinInBackground(new SaveCallback() {
+                                    @Override
+                                    public void done(ParseException e) {
+                                        if (e == null) {
+                                            Log.d("Location Object Update", "Success");
+                                        } else {
+                                            Log.d("Location Object Update", "Failed", e);
+                                        }
+                                    }
+                                });
+                            }else{
+                                ParseObject location = new ParseObject("Location");
+                                location.put("Latitude",latitude);
+                                location.put("Longitude",longitude);
+                                location.pinInBackground(new SaveCallback() {
+                                    @Override
+                                    public void done(ParseException e) {
+                                        if( e== null){
+                                            // Success
+                                            Log.d("Location Object Saving","Success");
+                                        }else{
+                                            // Failed
+                                            Log.d("Location Object Saving","Failed",e);
+                                        }
+                                    }
+                                });
+                            }
+                        }
+                    });
                     forecastURL = forecastBaseURL + ApiKEY + "/" + Double.toString(latitude) + "," +
                             Double.toString(longitude);
                     setupNetworkConnection(forecastURL);
@@ -372,20 +421,22 @@ public class CurrentFragment extends Fragment {
 
 
         // Getting the JSON data
-        if(latitude == 0 && longitude == 0) {
-            // Turn On Location settings
-            Toast.makeText(getActivity(),"Enable Location Settings",Toast.LENGTH_SHORT).show();
+
+
+        startAlarm(getActivity(), latitude, longitude);
+        if(latitude ==0  && longitude ==0){
+
         }else {
             forecastURL = forecastBaseURL + ApiKEY + "/" + Double.toString(latitude) + "," +
                     Double.toString(longitude);
             Log.d(getString(R.string.forecast_api_url), forecastURL);
-            startAlarm(getActivity(), latitude, longitude);
+            try {
+                mLocation.setText(getLocationName(latitude, longitude));
+            } catch (IOException e) {
+                Log.e("Location Error", "Error", e);
+            }
         }
-        try {
-            mLocation.setText(getLocationName(latitude,longitude));
-        } catch (IOException e) {
-            Log.e("Location Error","Error",e);
-        }
+
         mLocation.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -476,23 +527,19 @@ public class CurrentFragment extends Fragment {
                         String jsonData = response.body().string();
                         try {
                             // Get Location coordinates
-
+                           locationName = getLocationName(latitude,longitude);
                             ParseQuery<ParseObject> locQuery = ParseQuery.getQuery("Location");
                             locQuery.fromLocalDatastore();
                             locQuery.getFirstInBackground(new GetCallback<ParseObject>() {
                                 @Override
                                 public void done(ParseObject parseObject, ParseException e) {
-                                    if( e==null){
-                                         latitudeWid = parseObject.getDouble("Latitude");
-                                         longitudeWid = parseObject.getDouble("Longitude");
-                                        try {
-                                            locationName = getLocationName(latitude,longitude);
-                                        } catch (IOException e1) {
-                                            Log.e("Location Name Searching","Failure",e);
-                                        }
+                                    if (e == null) {
+                                        latitudeWid = parseObject.getDouble("Latitude");
+                                        longitudeWid = parseObject.getDouble("Longitude");
 
-                                    }else{
-                                        Log.e("Location Query","Failure",e);
+
+                                    } else {
+                                        Log.e("Location Query", "Failure", e);
                                     }
                                 }
                             });
@@ -506,8 +553,7 @@ public class CurrentFragment extends Fragment {
                             final String summary = mCurrentWeather.getSummary();
                             final String datetime = mCurrentWeather.getFormattedTime();
                             Double temp = mCurrentWeather.getTemperature();
-                            final int tempF = temp.intValue();
-                            final int appTempF = appTemp.intValue();
+
                             Double tempE = ((appTemp - 32)*5)/9;
                             Double tempD = ((temp - 32)*5)/9;
                             final int tempC = tempD.intValue();
@@ -609,8 +655,8 @@ public class CurrentFragment extends Fragment {
             getActivity().runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    Toast.makeText(getActivity(), getString(R.string.network_not_available),
-                            Toast.LENGTH_SHORT).show();
+                    // Toast.makeText(getActivity(), getString(R.string.network_not_available),
+                    //             Toast.LENGTH_SHORT).show();
                 }
             });
 
@@ -841,7 +887,8 @@ public class CurrentFragment extends Fragment {
         forecastURL = forecastBaseURL + ApiKEY + "/" + Double.toString(latitude) + "," +
                 Double.toString(longitude);
         setupNetworkConnection(forecastURL);
-
+//        mSendLatLong.updateData();
+//          mSendLatLong.sendLatLong(latitude,longitude);
 
     }
 
