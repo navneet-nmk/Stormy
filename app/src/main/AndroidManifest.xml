@@ -23,13 +23,13 @@
     <uses-permission android:name="com.teenvan.stormy.permission.C2D_MESSAGE" />
 
     <application
-        android:name=".StormyApplicationClass"
+        android:name="com.teenvan.stormypro.StormyApplicationClass"
         android:allowBackup="true"
-        android:icon="@drawable/picture"
+        android:icon="@drawable/ic_launcher"
         android:label="@string/app_name"
         android:theme="@style/AppTheme" >
         <activity
-            android:name=".MainActivity"
+            android:name="com.teenvan.stormypro.MainActivity"
             android:label="@string/app_name" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -68,10 +68,10 @@
         </receiver>
 
         <service
-            android:name=".services.WeatherService"
+            android:name="com.teenvan.stormypro.services.WeatherService"
             android:enabled="true" />
 
-        <receiver android:name=".Widgets.WeatherWidget" >
+        <receiver android:name="com.teenvan.stormypro.Widgets.WeatherWidget" >
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
             </intent-filter>
@@ -90,7 +90,7 @@
             android:name="com.google.android.gms.ads.AdActivity"
             android:theme="@android:style/Theme.Translucent" />
         <activity
-            android:name=".Widgets.WidgetLocationActivity"
+            android:name="com.teenvan.stormypro.Widgets.WidgetLocationActivity"
             android:label="@string/title_activity_widget_location" >
         </activity>
     </application>

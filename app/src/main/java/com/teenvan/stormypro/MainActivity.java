@@ -1,10 +1,7 @@
-package com.teenvan.stormy;
+package com.teenvan.stormypro;
 
-import android.app.AlarmManager;
 import android.app.FragmentTransaction;
-import android.app.PendingIntent;
 import android.content.Context;
-import android.content.Intent;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.ActionBar;
@@ -16,13 +13,12 @@ import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.AdView;
 import com.parse.ParseException;
 import com.parse.ParseInstallation;
-import com.parse.ParseUser;
 import com.parse.SaveCallback;
-import com.teenvan.stormy.com.teenvan.stormy.adapters.SectionsPagerAdapter;
-import com.teenvan.stormy.fragments.CurrentFragment;
-import com.teenvan.stormy.fragments.DailyFragment;
-import com.teenvan.stormy.fragments.HourlyFragment;
-import com.teenvan.stormy.services.WeatherService;
+import com.teenvan.stormy.R;
+import com.teenvan.stormypro.com.teenvan.stormy.adapters.SectionsPagerAdapter;
+import com.teenvan.stormypro.fragments.CurrentFragment;
+import com.teenvan.stormypro.fragments.DailyFragment;
+import com.teenvan.stormypro.fragments.HourlyFragment;
 
 
 public class MainActivity extends ActionBarActivity implements android.app.ActionBar.TabListener,
@@ -57,12 +53,11 @@ public class MainActivity extends ActionBarActivity implements android.app.Actio
             }
         });
 
-        // Referencing the UI elements
+//        // Referencing the UI elements
         ad = (AdView)findViewById(R.id.ad);
-        // AdRequest request = new AdRequest.Builder().addTestDevice().build();
-        AdRequest request = new AdRequest.Builder().
-                addTestDevice("AA967D1FB57ACA93CF35762D3CEA8762").build();
-        ad.loadAd(request);
+//         AdRequest request = new AdRequest.Builder().addTestDevice().build();
+        AdRequest request = new AdRequest.Builder().build();
+       ad.loadAd(request);
 
         final ActionBar bar = getSupportActionBar();
         bar.hide();

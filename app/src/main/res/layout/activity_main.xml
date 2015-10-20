@@ -10,7 +10,9 @@
     android:id="@+id/calibPager"
     android:layout_width="match_parent"
     android:layout_height="fill_parent"
-    android:layout_above="@+id/ad"/>
+    android:layout_above="@+id/ad"
+    />
+
 
     <com.google.android.gms.ads.AdView
         android:id="@+id/ad"
@@ -22,5 +24,4 @@
         android:layout_centerHorizontal="true">
 
     </com.google.android.gms.ads.AdView>
-
 </RelativeLayout>

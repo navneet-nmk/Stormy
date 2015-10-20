@@ -1,4 +1,4 @@
-package com.teenvan.stormy.com.teenvan.stormy.adapters;
+package com.teenvan.stormypro.com.teenvan.stormy.adapters;
 
 import java.util.Locale;
 
@@ -8,11 +8,11 @@ import android.support.v4.app.FragmentPagerAdapter;
 import android.util.SparseArray;
 import android.view.ViewGroup;
 
-import com.teenvan.stormy.MainActivity;
+import com.teenvan.stormypro.MainActivity;
 import com.teenvan.stormy.R;
-import com.teenvan.stormy.fragments.DailyFragment;
-import com.teenvan.stormy.fragments.HourlyFragment;
-import com.teenvan.stormy.fragments.CurrentFragment;
+import com.teenvan.stormypro.fragments.DailyFragment;
+import com.teenvan.stormypro.fragments.HourlyFragment;
+import com.teenvan.stormypro.fragments.CurrentFragment;
 
 /**
  * A {@link android.support.v4.app.FragmentPagerAdapter} that returns a fragment corresponding to one

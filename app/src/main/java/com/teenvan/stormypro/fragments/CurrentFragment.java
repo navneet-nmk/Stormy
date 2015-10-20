@@ -1,4 +1,4 @@
-package com.teenvan.stormy.fragments;
+package com.teenvan.stormypro.fragments;
 
 import android.app.Activity;
 import android.app.AlarmManager;
@@ -28,7 +28,6 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.AdView;
 import com.parse.GetCallback;
 import com.parse.ParseException;
@@ -36,7 +35,6 @@ import com.parse.ParseInstallation;
 import com.parse.ParseObject;
 import com.parse.ParsePush;
 import com.parse.ParseQuery;
-import com.parse.ParseUser;
 import com.parse.SaveCallback;
 import com.parse.SendCallback;
 import com.squareup.okhttp.Call;
@@ -44,9 +42,9 @@ import com.squareup.okhttp.Callback;
 import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.Request;
 import com.squareup.okhttp.Response;
-import com.teenvan.stormy.CurrentWeather;
+import com.teenvan.stormypro.CurrentWeather;
 import com.teenvan.stormy.R;
-import com.teenvan.stormy.services.WeatherService;
+import com.teenvan.stormypro.services.WeatherService;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -57,7 +55,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Timer;
 import java.util.TimerTask;
-import java.util.logging.Handler;
 
 import se.walkercrou.places.GooglePlaces;
 
@@ -527,8 +524,12 @@ public class CurrentFragment extends Fragment {
                         String jsonData = response.body().string();
                         try {
                             // Get Location coordinates
-                           locationName = getLocationName(latitude,longitude);
-                            ParseQuery<ParseObject> locQuery = ParseQuery.getQuery("Location");
+                            if(latitude ==0 && longitude ==0){
+                                locationName = "Jaipur";
+                            }else {
+                                locationName = getLocationName(latitude, longitude);
+                            }
+                                ParseQuery<ParseObject> locQuery = ParseQuery.getQuery("Location");
                             locQuery.fromLocalDatastore();
                             locQuery.getFirstInBackground(new GetCallback<ParseObject>() {
                                 @Override

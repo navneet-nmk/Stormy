@@ -1,4 +1,4 @@
-package com.teenvan.stormy;
+package com.teenvan.stormypro;
 
 import android.app.Application;
 import android.util.Log;

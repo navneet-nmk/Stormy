@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.teenvan.stormy.com.teenvan.stormy.adapters;
+package com.teenvan.stormypro.com.teenvan.stormy.adapters;
 
 import android.app.Activity;
 import android.graphics.Typeface;

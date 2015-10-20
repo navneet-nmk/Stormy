@@ -1,9 +1,6 @@
-package com.teenvan.stormy.services;
+package com.teenvan.stormypro.services;
 
 import java.io.IOException;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.List;
 import java.util.Locale;
 import java.util.Timer;
@@ -21,30 +18,23 @@ import android.location.LocationManager;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.IBinder;
-import android.os.Parcelable;
 import android.util.Log;
 import android.widget.RemoteViews;
 
 import com.parse.GetCallback;
-import com.parse.Parse;
 import com.parse.ParseException;
-import com.parse.ParseInstallation;
 import com.parse.ParseObject;
-import com.parse.ParsePush;
 import com.parse.ParseQuery;
-import com.parse.ParseUser;
 import com.parse.SaveCallback;
-import com.parse.SendCallback;
 import com.squareup.okhttp.Call;
 import com.squareup.okhttp.Callback;
 import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.Request;
 import com.squareup.okhttp.Response;
-import com.teenvan.stormy.CurrentWeather;
+import com.teenvan.stormypro.CurrentWeather;
 import com.teenvan.stormy.R;
-import com.teenvan.stormy.Widgets.WeatherWidget;
+import com.teenvan.stormypro.Widgets.WeatherWidget;
 
-import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -57,6 +47,7 @@ public class WeatherService extends Service {
     private double longitude;
     private String hourlySummaryString = "Clear for the day";
     private Double lat=0.0 , longi=0.0;
+    private String locationName;
 
 
 	@Override
@@ -217,10 +208,14 @@ public class WeatherService extends Service {
                             final String iconString = mCurrentWeather.getIcon();
                             final String time = mCurrentWeather.getFormattedTime();
                             final int iconInt = getImageDrawable(iconString);
+                              locationName = "Jaipur";
+                        if(latitude ==0 && longitude ==0){
 
-                            final String locationName = getLocationName(WeatherService.this,
+
+                        }else {
+                            locationName = getLocationName(WeatherService.this,
                                     latitude, longitude);
-
+                        }
 
                             // Get HourlySummary
                             ParseQuery<ParseObject> hourlyQuery = ParseQuery.
